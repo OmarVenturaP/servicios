@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import ServiceList from "@/components/ServiceList";
+import VisitTracker from "@/components/VisitTracker";
 import { getPublicServicesByCity } from "@/db/queries/public-services";
 
 const categories = [
@@ -38,6 +39,7 @@ export default async function CityPage({ params }) {
 
   return (
     <div className="min-h-screen bg-[#eef1f6] py-0 sm:py-8">
+      <VisitTracker citySlug={city.slug} />
       <div id="inicio" className="relative mx-auto min-h-screen w-full overflow-hidden bg-[#fbfcff] shadow-[0_20px_70px_rgba(15,23,42,0.16)] sm:min-h-[840px] sm:max-w-[430px] sm:rounded-[2.25rem]">
         <section className="hero-reference relative h-[16.2rem] overflow-hidden">
           <Header cityName={city.name} />
@@ -116,7 +118,7 @@ export default async function CityPage({ params }) {
               <h2 className="text-[0.92rem] font-black text-slate-950">Motomandados disponibles ahora</h2>
               <span className="text-[0.68rem] font-bold text-blue-600">Ver todos</span>
             </div>
-            <ServiceList services={services} totals={totals} />
+            <ServiceList citySlug={city.slug} services={services} totals={totals} />
           </section>
         </main>
 

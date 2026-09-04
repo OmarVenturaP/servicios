@@ -1,6 +1,7 @@
 import { Bike, MapPin } from "lucide-react";
+import ContactButtons from "./ContactButtons";
 
-export default function ServiceCard({ service }) {
+export default function ServiceCard({ citySlug, service }) {
   const unitLabel = service.availableUnits === 1 ? "1 unidad" : `${service.availableUnits} unidades`;
 
   return (
@@ -24,7 +25,7 @@ export default function ServiceCard({ service }) {
           </p>
         </div>
       </div>
-      <div className="mt-2.5 flex items-end justify-between border-t border-slate-100 pt-2.5">
+      <div className="mt-2.5 border-t border-slate-100 pt-2.5">
         {service.isAvailable ? (
           <div>
             <p className="text-xs text-slate-600">
@@ -35,14 +36,13 @@ export default function ServiceCard({ service }) {
         ) : (
           <p className="text-xs font-semibold text-slate-500">Precio no disponible</p>
         )}
-        <button
-          type="button"
-          disabled
-          className={`min-h-9 rounded-lg px-5 text-xs font-extrabold text-white shadow-sm disabled:cursor-not-allowed ${service.isAvailable ? "bg-blue-600" : "bg-slate-300"}`}
-        >
-          Ver servicio
-        </button>
       </div>
+      <ContactButtons
+        citySlug={citySlug}
+        serviceSlug={service.slug}
+        priceShown={service.priceFrom}
+        disabled={!service.isAvailable}
+      />
     </article>
   );
 }
