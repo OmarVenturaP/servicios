@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Servicios Tonalá | Motomandados locales",
-  description: "Encuentra y contacta motomandados locales en Tonalá, Chiapas.",
+  title: "Servicios locales | Motomandados disponibles",
+  description: "Encuentra motomandados disponibles en tu ciudad.",
 };
 
 export default function RootLayout({ children }) {

@@ -1470,6 +1470,9 @@ Evitar optimizaciones prematuras.
 
 ## Fase técnica 3 — Landing
 
+- crear ruta dinámica `/[ciudad]`;
+- `/` redirige temporalmente a `/tonala`;
+- resolver la ciudad por `cat_ciudades.slug`;
 - header;
 - hero;
 - categoría Mandados;
@@ -1480,7 +1483,9 @@ Evitar optimizaciones prematuras.
 
 ## Fase técnica 4 — Datos reales de disponibilidad
 
-- consultas MySQL;
+Sobre la ruta `/[ciudad]` ya existente:
+
+- consultar servicios de la ciudad resuelta por slug;
 - disponibilidad efectiva;
 - unidades disponibles;
 - precio mínimo;
