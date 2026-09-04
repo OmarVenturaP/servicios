@@ -1,14 +1,14 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Servicios",
-  description: "Base para administrar servicios con Next.js, MySQL y Drizzle ORM.",
+  title: "Servicios Tonalá | Motomandados locales",
+  description: "Encuentra y contacta motomandados locales en Tonalá, Chiapas.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
