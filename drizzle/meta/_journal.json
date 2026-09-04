@@ -8,6 +8,13 @@
       "when": 1788544707292,
       "tag": "0000_faulty_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1788551451610,
+      "tag": "0001_fantastic_sasquatch",
+      "breakpoints": true
     }
   ]
 }
