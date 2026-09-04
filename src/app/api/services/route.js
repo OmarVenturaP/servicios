@@ -1,16 +1,19 @@
-import { desc } from "drizzle-orm";
 import { getDb } from "@/db";
 import { datServicios } from "@/db/schema";
+import { getPublicServicesByCity } from "@/db/queries/public-services";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const rows = await getDb()
-      .select()
-      .from(datServicios)
-      .orderBy(desc(datServicios.createdAt));
-    return Response.json(rows);
+    const citySlug = new URL(request.url).searchParams.get("city")?.trim() || "tonala";
+    const result = await getPublicServicesByCity(citySlug);
+
+    if (!result) {
+      return Response.json({ error: "Ciudad no encontrada" }, { status: 404 });
+    }
+
+    return Response.json(result);
   } catch (error) {
     console.error("No se pudieron consultar los servicios", error);
     return Response.json({ error: "No se pudieron consultar los servicios" }, { status: 500 });

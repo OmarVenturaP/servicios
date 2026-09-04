@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { connection } from "next/server";
+import { notFound } from "next/navigation";
 import {
   Bike,
   CarFront,
@@ -14,8 +16,9 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import ServiceList from "@/components/ServiceList";
+import { getPublicServicesByCity } from "@/db/queries/public-services";
 
-const city = { name: "Tonalá" };
+const citySlug = "tonala";
 
 const categories = [
   { name: "Mandados", icon: Bike, active: true },
@@ -24,27 +27,15 @@ const categories = [
   { name: "Ver más", icon: Grid2X2 },
 ];
 
-const developmentServices = [
-  {
-    id: "demo-1",
-    name: "Motomandados Demo Centro",
-    description: "Compras y entregas",
-    coverage: "Tonalá y alrededores",
-    priceFrom: "40",
-    accent: "bg-slate-950",
-  },
-  {
-    id: "demo-2",
-    name: "Mandados Demo Express",
-    description: "Compras, pagos y entregas",
-    coverage: "Zona urbana de demostración",
-    priceFrom: "45",
-    accent: "bg-emerald-600",
-  },
-];
+export default async function HomePage() {
+  await connection();
+  const availability = await getPublicServicesByCity(citySlug);
 
-export default function HomePage() {
-  const services = process.env.NODE_ENV === "development" ? developmentServices : [];
+  if (!availability) {
+    notFound();
+  }
+
+  const { city, services, totals } = availability;
 
   return (
     <div className="min-h-screen bg-[#eef1f6] py-0 sm:py-8">
@@ -126,7 +117,7 @@ export default function HomePage() {
               <h2 className="text-[0.92rem] font-black text-slate-950">Motomandados disponibles ahora</h2>
               <span className="text-[0.68rem] font-bold text-blue-600">Ver todos</span>
             </div>
-            <ServiceList services={services} />
+            <ServiceList services={services} totals={totals} />
           </section>
         </main>
 
