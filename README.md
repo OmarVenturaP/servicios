@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Servicios
 
-## Getting Started
+Proyecto base en JavaScript con Next.js, Tailwind CSS, MySQL y Drizzle ORM,
+preparado para usar una base de datos administrada por Aiven y desplegarse en Vercel.
 
-First, run the development server:
+## Desarrollo local
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Requisitos: Node.js 20.9 o superior y una instancia MySQL en Aiven.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Copia `.env.example` como `.env.local`.
+2. En Aiven, copia la URI de conexión del servicio MySQL en `DATABASE_URL`.
+3. Descarga el certificado CA de Aiven, conviértelo a Base64 y guárdalo en
+   `AIVEN_CA_CERT_BASE64`.
+4. Crea o actualiza las tablas con `npm run db:push`.
+5. Inicia el proyecto con `npm run dev`.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+La API inicial expone:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `GET /api/services`: lista los servicios.
+- `POST /api/services`: crea un servicio con `{ "name": "...", "description": "..." }`.
 
-## Learn More
+## Migraciones con Drizzle
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run db:generate`: genera migraciones a partir del esquema.
+- `npm run db:migrate`: aplica las migraciones pendientes.
+- `npm run db:studio`: abre Drizzle Studio.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Para usar los comandos de Drizzle, define `DATABASE_URL` en un archivo `.env`.
+Next.js también lee `.env.local` al ejecutar la aplicación.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Despliegue en Vercel
 
-## Deploy on Vercel
+1. Sube el proyecto a un repositorio Git.
+2. Impórtalo en Vercel como proyecto Next.js.
+3. Agrega `DATABASE_URL` y `AIVEN_CA_CERT_BASE64` en
+   **Settings > Environment Variables** para los entornos deseados.
+4. Despliega. Vercel detecta Next.js automáticamente; no hace falta `vercel.json`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Antes del primer uso en producción, ejecuta las migraciones contra la base de datos de Aiven desde un entorno seguro.
