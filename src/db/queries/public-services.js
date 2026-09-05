@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
+import { effectiveAvailableCondition } from "@/db/availability";
 import {
   catCiudades,
   catEstadosUnidad,
@@ -7,10 +8,7 @@ import {
   datUnidades,
 } from "@/db/schema";
 
-const effectiveAvailability = sql`${datUnidades.activo} = true
-  and ${catEstadosUnidad.activo} = true
-  and ${catEstadosUnidad.clave} = 'disponible'
-  and ${datUnidades.estadoHasta} > now()`;
+const effectiveAvailability = effectiveAvailableCondition();
 
 const availableUnits = sql`sum(case when ${effectiveAvailability} then 1 else 0 end)`;
 const minimumAvailablePrice = sql`min(case when ${effectiveAvailability} then ${datUnidades.precioBase} else null end)`;

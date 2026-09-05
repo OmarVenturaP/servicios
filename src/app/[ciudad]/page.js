@@ -21,7 +21,7 @@ import { getPublicServicesByCity } from "@/db/queries/public-services";
 
 const categories = [
   { name: "Mandados", icon: Bike, active: true },
-  { name: "Taxis", icon: CarFront },
+  { name: "Traslados", icon: CarFront },
   { name: "Fletes", icon: Package },
   { name: "Ver más", icon: Grid2X2 },
 ];

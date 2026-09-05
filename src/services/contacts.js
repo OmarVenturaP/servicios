@@ -1,5 +1,6 @@
-import { and, asc, count, eq, max, sql } from "drizzle-orm";
+import { and, asc, count, eq, max } from "drizzle-orm";
 import { getDb } from "@/db";
+import { effectiveAvailableCondition } from "@/db/availability";
 import {
   catCiudades,
   catEstadosUnidad,
@@ -10,12 +11,7 @@ import {
 } from "@/db/schema";
 
 const CHANNELS = new Set(["whatsapp", "llamada"]);
-const effectiveAvailability = and(
-  eq(datUnidades.activo, true),
-  eq(catEstadosUnidad.activo, true),
-  eq(catEstadosUnidad.clave, "disponible"),
-  sql`${datUnidades.estadoHasta} > now()`,
-);
+const effectiveAvailability = effectiveAvailableCondition();
 
 export class ContactError extends Error {
   constructor(code, message, status = 400) {

@@ -1282,9 +1282,319 @@ Evitar sobrearquitectura.
 
 ---
 
-# 51. Administración
+# 51. Administración operativa del MVP
 
-Durante MVP:
+Durante el piloto existirá un panel administrativo mínimo para uso
+exclusivo del operador/master de la plataforma.
+
+Ruta inicial:
+
+    /admin
+
+Este panel NO representa todavía un sistema administrativo completo.
+
+Su objetivo es eliminar la dependencia cotidiana de TablePlus para
+operaciones sencillas durante el piloto.
+
+El panel permitirá:
+
+- consultar servicios;
+- buscar servicios;
+- crear servicios;
+- editar información básica de servicios;
+- consultar unidades pertenecientes a un servicio;
+- crear unidades;
+- editar información básica de una unidad;
+- modificar precio_base;
+- modificar estado de una unidad cuando sea necesario;
+- generar acceso privado de unidad;
+- rotar acceso privado de unidad;
+- copiar el enlace generado;
+- preparar el enlace para compartir por WhatsApp.
+
+TablePlus seguirá utilizándose para:
+
+- inspección técnica;
+- consultas avanzadas;
+- correcciones excepcionales;
+- revisión directa de logs;
+- mantenimiento de base de datos.
+
+No construir todavía:
+
+- usuarios administrativos;
+- múltiples roles administrativos;
+- permisos granulares;
+- recuperación de contraseña;
+- OAuth;
+- sistema completo de administración.
+
+# 51.1 Acceso administrativo
+
+El panel /admin estará protegido mediante una clave administrativa
+definida exclusivamente como variable de entorno.
+
+Ejemplo:
+
+    ADMIN_ACCESS_KEY=
+
+La clave:
+
+- NO debe almacenarse en MySQL;
+- NO debe incluirse en código fuente;
+- NO debe exponerse al cliente;
+- NO debe persistirse en cookies;
+- NO debe persistirse en localStorage;
+- NO debe persistirse en sessionStorage.
+
+Durante el MVP, el administrador introducirá la clave al acceder al
+panel.
+
+La aplicación podrá conservarla únicamente en memoria mientras la
+página permanezca abierta.
+
+Si la página se recarga o se cierra, deberá solicitarse nuevamente.
+
+Cada operación administrativa sensible debe validar la credencial en
+servidor.
+
+Ocultar componentes en frontend NO constituye autorización.
+
+# 51.2 Administración de servicios con múltiples unidades
+
+Un servicio debe mostrarse una sola vez dentro del panel
+administrativo.
+
+Ejemplo:
+
+    Motomandados El Profe
+    3 unidades
+
+El operador podrá seleccionar la unidad que desea administrar.
+
+Ejemplo:
+
+    Unidad
+    [ Unidad 1 ▼ ]
+
+El cambio de unidad debe permitir consultar y modificar los datos
+específicos de esa unidad.
+
+No duplicar visualmente el servicio por cada unidad.
+
+La información se divide conceptualmente en:
+
+Datos del servicio:
+
+- nombre;
+- ciudad;
+- modo de contacto;
+- teléfono central;
+- WhatsApp central;
+- descripción;
+- cobertura;
+- visibilidad.
+
+Datos de la unidad:
+
+- nombre;
+- teléfono;
+- WhatsApp;
+- precio_base;
+- estado;
+- estado_hasta;
+- activo;
+- estado del acceso privado.
+
+Las operaciones sobre una unidad deben afectar exclusivamente a esa
+unidad.
+
+# 51.3 Alta rápida de proveedor
+
+El panel administrativo permitirá crear un proveedor desde una única
+pantalla.
+
+Para un proveedor independiente, la operación inicial creará:
+
+    1 dat_servicios
+    +
+    1 dat_unidades
+
+Datos mínimos:
+
+Servicio:
+
+- nombre;
+- ciudad;
+- modo de contacto;
+- teléfono;
+- WhatsApp;
+- cobertura opcional.
+
+Primera unidad:
+
+- nombre opcional;
+- teléfono;
+- WhatsApp;
+- precio_base.
+
+Después de crear la unidad, el operador podrá generar inmediatamente
+su acceso privado.
+
+El objetivo es que el alta inicial pueda realizarse desde un teléfono
+móvil sin utilizar TablePlus.
+
+# 51.4 Gestión de accesos privados
+
+El panel administrativo permitirá generar y rotar el acceso privado de
+una unidad.
+
+Flujo de generación:
+
+    generar token criptográficamente seguro
+            ↓
+    mostrar token/enlace al administrador
+            ↓
+    calcular SHA-256
+            ↓
+    guardar únicamente token_hash
+
+El token plano nunca debe almacenarse en MySQL.
+
+Después de generar el acceso se mostrará:
+
+    https://{dominio}/u/{token}
+
+Acciones:
+
+- Copiar enlace
+- Compartir por WhatsApp
+
+El token plano debe considerarse recuperable únicamente mientras se
+encuentra visible en esa operación.
+
+Si posteriormente se pierde:
+
+    generar acceso nuevo
+
+No intentar recuperar el token anterior desde la base de datos.
+
+Rotar acceso significa:
+
+1. generar token nuevo;
+2. sustituir token_hash;
+3. invalidar inmediatamente el enlace anterior.
+
+La rotación no debe modificar:
+
+- precio;
+- estado;
+- teléfono;
+- servicio;
+- demás información operativa de la unidad.
+
+# 51.5 Compartir acceso por WhatsApp
+
+Después de generar un acceso privado, el panel podrá preparar un
+mensaje de WhatsApp.
+
+Ejemplo:
+
+    Hola.
+
+    Este es tu enlace privado para actualizar tu disponibilidad y
+    precio en Servicios {ciudad}:
+
+    {url_privada}
+
+    Guárdalo, ya que desde este enlace podrás indicar si estás
+    disponible, ocupado o fuera de servicio.
+
+No es necesaria WhatsApp Business API para esta funcionalidad.
+
+Utilizar únicamente una URL de WhatsApp con mensaje prellenado.
+
+# 51.6 Soporte operativo de unidades
+
+El administrador/master podrá modificar manualmente el estado de una
+unidad desde /admin.
+
+Esta funcionalidad existe como soporte operativo.
+
+Ejemplos:
+
+- repartidor perdió temporalmente su enlace;
+- repartidor solicita que lo marquen como no disponible;
+- dueño de flotilla solicita actualizar una unidad;
+- problema operativo durante el piloto.
+
+Los estados disponibles serán los mismos definidos para /u/[token]:
+
+- disponible;
+- ocupado;
+- no_disponible.
+
+Aplicar exactamente las mismas reglas temporales:
+
+Disponible:
+
+    NOW() + 3 horas
+
+Ocupado:
+
+    NOW() + 1 hora
+
+No disponible:
+
+    estado_hasta = NULL
+
+Los cambios administrativos deben generar también un registro en:
+
+    log_estados_unidad
+
+No crear una segunda lógica de disponibilidad para el administrador.
+Reutilizar la misma lógica de dominio utilizada por /u/[token].
+
+# 51.6 Soporte operativo de unidades
+
+El administrador/master podrá modificar manualmente el estado de una
+unidad desde /admin.
+
+Esta funcionalidad existe como soporte operativo.
+
+Ejemplos:
+
+- repartidor perdió temporalmente su enlace;
+- repartidor solicita que lo marquen como no disponible;
+- dueño de flotilla solicita actualizar una unidad;
+- problema operativo durante el piloto.
+
+Los estados disponibles serán los mismos definidos para /u/[token]:
+
+- disponible;
+- ocupado;
+- no_disponible.
+
+Aplicar exactamente las mismas reglas temporales:
+
+Disponible:
+
+    NOW() + 3 horas
+
+Ocupado:
+
+    NOW() + 1 hora
+
+No disponible:
+
+    estado_hasta = NULL
+
+Los cambios administrativos deben generar también un registro en:
+
+    log_estados_unidad
+
+No crear una segunda lógica de disponibilidad para el administrador.
+Reutilizar la misma lógica de dominio utilizada por /u/[token].
 
 **TablePlus será el panel administrativo.**
 
@@ -1385,7 +1695,9 @@ NO implementar todavía:
 - login de clientes;
 - cuentas de clientes;
 - registro público de proveedores;
-- panel administrativo;
+- panel administrativo completo;
+- usuarios y roles administrativos;
+- panel de flotilla para proveedores;
 - panel completo del servicio;
 - pagos online;
 - procesamiento de pagos;
@@ -1659,3 +1971,74 @@ Y permitir completar inmediatamente la siguiente acción:
 > Contactarlo.
 
 Todo lo que no contribuya directamente a esas dos cosas puede esperar.
+
+# 64. Roadmap — Acceso de administrador de servicio / flotilla
+
+La arquitectura debe contemplar una evolución futura para servicios
+con múltiples unidades.
+
+Durante MVP v1:
+
+    /u/{token}
+
+controla exclusivamente una unidad.
+
+El operador/master puede administrar todas las unidades mediante:
+
+    /admin
+
+No construir todavía un panel de flotilla para el proveedor.
+
+Si durante el piloto se valida que servicios con tres o más unidades
+necesitan administración centralizada, incorporar posteriormente:
+
+    /s/{token}
+
+donde "s" representa un acceso privado del servicio.
+
+Este acceso será distinto del acceso master /admin.
+
+Objetivo:
+
+Permitir que el responsable de un servicio administre únicamente su
+propia flotilla.
+
+Ejemplo:
+
+    Motomandados El Profe
+
+    3 de 5 disponibles
+
+    Unidad 1     Disponible
+    Unidad 2     Disponible
+    Unidad 3     Ocupado
+    Unidad 4     No disponible
+    Unidad 5     Disponible
+
+Acciones futuras:
+
+- cambiar estado de una unidad;
+- activar varias unidades;
+- desactivar varias unidades;
+- modificar precios;
+- consultar disponibilidad general;
+- agregar o administrar unidades si el modelo comercial lo permite.
+
+No debe permitir:
+
+- administrar otros servicios;
+- acceder a configuración master;
+- consultar información privada de otros proveedores.
+
+El acceso de servicio deberá utilizar un token/credencial diferente
+al token de las unidades.
+
+No reutilizar un token de unidad para conceder privilegios de flotilla.
+
+La decisión de implementar esta funcionalidad deberá basarse en datos
+del piloto, particularmente:
+
+- cantidad de servicios con múltiples unidades;
+- cantidad promedio de unidades por servicio;
+- frecuencia con la que un responsable administra varias unidades;
+- dificultad real de mantener estados por repartidor.
