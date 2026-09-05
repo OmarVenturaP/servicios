@@ -99,7 +99,7 @@ export const datUnidades = mysqlTable(
       .references(() => catEstadosUnidad.id, { onDelete: "restrict", onUpdate: "cascade" }),
     estadoActualizadoAt: timestamp("estado_actualizado_at").defaultNow().notNull(),
     estadoHasta: timestamp("estado_hasta"),
-    tokenHash: char("token_hash", { length: 64 }).notNull(),
+    tokenHash: char("token_hash", { length: 64 }),
     activo: boolean("activo").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),

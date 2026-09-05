@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { effectiveAvailableCondition } from "@/db/availability";
+import { effectiveAvailableCondition, effectiveOccupiedCondition } from "@/db/availability";
 import {
   catCiudades,
   catEstadosUnidad,
@@ -9,8 +9,10 @@ import {
 } from "@/db/schema";
 
 const effectiveAvailability = effectiveAvailableCondition();
+const effectiveOccupation = effectiveOccupiedCondition();
 
 const availableUnits = sql`sum(case when ${effectiveAvailability} then 1 else 0 end)`;
+const occupiedUnits = sql`sum(case when ${effectiveOccupation} then 1 else 0 end)`;
 const minimumAvailablePrice = sql`min(case when ${effectiveAvailability} then ${datUnidades.precioBase} else null end)`;
 const latestAvailabilityUpdate = sql`max(case when ${effectiveAvailability} then ${datUnidades.estadoActualizadoAt} else null end)`;
 
@@ -42,6 +44,7 @@ export async function getPublicServicesByCity(citySlug) {
       coverage: datServicios.coberturaTexto,
       logoUrl: datServicios.logoUrl,
       availableUnits,
+      occupiedUnits,
       priceFrom: minimumAvailablePrice,
       availabilityUpdatedAt: latestAvailabilityUpdate,
     })
@@ -67,7 +70,13 @@ export async function getPublicServicesByCity(citySlug) {
   const services = rows.map((row) => ({
     ...row,
     availableUnits: Number(row.availableUnits),
+    occupiedUnits: Number(row.occupiedUnits),
     isAvailable: Number(row.availableUnits) > 0,
+    publicState: Number(row.availableUnits) > 0
+      ? "disponible"
+      : Number(row.occupiedUnits) > 0
+        ? "ocupado"
+        : "no_disponible",
     priceFrom: row.priceFrom === null ? null : Number(row.priceFrom),
   }));
 

@@ -101,11 +101,6 @@ export async function resolveUnitPanel(token) {
 
 export async function updateUnitStatus({ token, action }) {
   const tokenHash = requireTokenHash(token);
-  const actionConfig = STATUS_ACTIONS[action];
-
-  if (!actionConfig) {
-    throw new UnitPanelError("invalid_action", "La acción solicitada no es válida.");
-  }
 
   return getDb().transaction(async (tx) => {
     const unit = await findActiveUnit(tx, tokenHash);
@@ -113,37 +108,72 @@ export async function updateUnitStatus({ token, action }) {
       throw new UnitPanelError("invalid_link", "El enlace no es válido o ya no está activo.", 404);
     }
 
-    const [state] = await tx
-      .select({ id: catEstadosUnidad.id })
-      .from(catEstadosUnidad)
-      .where(and(eq(catEstadosUnidad.clave, actionConfig.state), eq(catEstadosUnidad.activo, true)))
-      .limit(1);
-
-    if (!state) {
-      throw new UnitPanelError("state_unavailable", "No fue posible actualizar el estado.", 409);
-    }
-
-    const stateUntil = actionConfig.hours === null
-      ? null
-      : sql`date_add(now(), interval ${actionConfig.hours} hour)`;
-
-    await tx
-      .update(datUnidades)
-      .set({ estadoId: state.id, estadoActualizadoAt: sql`now()`, estadoHasta: stateUntil })
-      .where(and(eq(datUnidades.id, unit.id), eq(datUnidades.activo, true)));
+    await updateUnitStatusRecord(tx, { unitId: unit.id, action });
 
     const updatedUnit = await findActiveUnit(tx, tokenHash);
     if (!updatedUnit) {
       throw new UnitPanelError("invalid_link", "El enlace no es válido o ya no está activo.", 404);
     }
 
-    await tx.insert(logEstadosUnidad).values({
-      unidadId: unit.id,
-      estadoId: state.id,
-      estadoHasta: updatedUnit.stateUntil,
-    });
-
     return safeUnit(updatedUnit);
+  });
+}
+
+async function updateUnitStatusRecord(tx, { unitId, action }) {
+  const actionConfig = STATUS_ACTIONS[action];
+  if (!actionConfig) {
+    throw new UnitPanelError("invalid_action", "La acción solicitada no es válida.");
+  }
+
+  const [state] = await tx
+      .select({ id: catEstadosUnidad.id })
+      .from(catEstadosUnidad)
+      .where(and(eq(catEstadosUnidad.clave, actionConfig.state), eq(catEstadosUnidad.activo, true)))
+      .limit(1);
+
+  if (!state) {
+    throw new UnitPanelError("state_unavailable", "No fue posible actualizar el estado.", 409);
+  }
+
+  const stateUntil = actionConfig.hours === null
+    ? null
+    : sql`date_add(now(), interval ${actionConfig.hours} hour)`;
+
+  await tx
+    .update(datUnidades)
+    .set({ estadoId: state.id, estadoActualizadoAt: sql`now()`, estadoHasta: stateUntil })
+    .where(eq(datUnidades.id, unitId));
+
+  const [updatedUnit] = await tx
+    .select({ stateUntil: datUnidades.estadoHasta })
+    .from(datUnidades)
+    .where(eq(datUnidades.id, unitId))
+    .limit(1);
+
+  if (!updatedUnit) {
+    throw new UnitPanelError("unit_not_found", "La unidad no existe.", 404);
+  }
+
+  await tx.insert(logEstadosUnidad).values({
+    unidadId: unitId,
+    estadoId: state.id,
+    estadoHasta: updatedUnit.stateUntil,
+  });
+}
+
+export async function updateUnitStatusById({ serviceId, unitId, action }) {
+  return getDb().transaction(async (tx) => {
+    const [unit] = await tx
+      .select({ id: datUnidades.id })
+      .from(datUnidades)
+      .where(and(eq(datUnidades.id, unitId), eq(datUnidades.servicioId, serviceId)))
+      .limit(1);
+
+    if (!unit) {
+      throw new UnitPanelError("unit_not_found", "La unidad no pertenece al servicio.", 404);
+    }
+
+    await updateUnitStatusRecord(tx, { unitId: unit.id, action });
   });
 }
 

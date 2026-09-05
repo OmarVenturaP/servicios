@@ -10,6 +10,15 @@ export function effectiveAvailableCondition() {
   );
 }
 
+export function effectiveOccupiedCondition() {
+  return and(
+    eq(datUnidades.activo, true),
+    eq(catEstadosUnidad.activo, true),
+    eq(catEstadosUnidad.clave, "ocupado"),
+    sql`${datUnidades.estadoHasta} > now()`,
+  );
+}
+
 export function getEffectiveUnitStatus({ active, state, stateUntil }) {
   if (!active) {
     return "no_disponible";

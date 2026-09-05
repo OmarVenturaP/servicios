@@ -15,8 +15,6 @@ export default function ServiceList({ citySlug, services, totals }) {
   return (
     <>
       <p className="mb-2.5 text-[0.7rem] font-semibold text-slate-500">
-        {totals.services} {totals.services === 1 ? "servicio" : "servicios"}
-        <span aria-hidden="true"> · </span>
         {totals.availableUnits} {totals.availableUnits === 1 ? "unidad disponible" : "unidades disponibles"}
       </p>
       <div className="space-y-3">

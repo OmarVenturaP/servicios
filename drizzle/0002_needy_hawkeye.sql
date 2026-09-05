@@ -1,0 +1,1 @@
+ALTER TABLE `dat_unidades` MODIFY COLUMN `token_hash` char(64);

@@ -1420,29 +1420,51 @@ Para un proveedor independiente, la operación inicial creará:
     +
     1 dat_unidades
 
-Datos mínimos:
+Datos iniciales:
 
-Servicio:
+SERVICIO
 
 - nombre;
 - ciudad;
 - modo de contacto;
 - teléfono;
 - WhatsApp;
-- cobertura opcional.
+- cobertura opcional;
+- logo opcional.
 
-Primera unidad:
+PRIMERA UNIDAD
 
 - nombre opcional;
 - teléfono;
 - WhatsApp;
 - precio_base.
 
-Después de crear la unidad, el operador podrá generar inmediatamente
-su acceso privado.
+El logo, cuando sea proporcionado, será almacenado en Cloudinary y
+dat_servicios.logo_url conservará únicamente su URL segura.
 
-El objetivo es que el alta inicial pueda realizarse desde un teléfono
-móvil sin utilizar TablePlus.
+La imposibilidad temporal de subir el logo no debe impedir el alta del
+proveedor.
+
+# 51.3.1 Edición de información del servicio
+
+El administrador podrá modificar:
+
+- nombre;
+- modo de contacto;
+- teléfono;
+- WhatsApp;
+- descripción;
+- cobertura;
+- visibilidad;
+- logo.
+
+Para el logo podrá:
+
+- agregar;
+- reemplazar;
+- eliminar.
+
+Estas operaciones utilizarán Cloudinary.
 
 # 51.4 Gestión de accesos privados
 
@@ -1555,48 +1577,260 @@ Los cambios administrativos deben generar también un registro en:
 No crear una segunda lógica de disponibilidad para el administrador.
 Reutilizar la misma lógica de dominio utilizada por /u/[token].
 
-# 51.6 Soporte operativo de unidades
+# 51.7 Logo del servicio y almacenamiento en Cloudinary
 
-El administrador/master podrá modificar manualmente el estado de una
-unidad desde /admin.
+Los logos públicos de los servicios serán almacenados en Cloudinary.
 
-Esta funcionalidad existe como soporte operativo.
+Cloudinary será el proveedor de almacenamiento de imágenes utilizado
+por el MVP.
 
-Ejemplos:
+Los archivos de imagen NO deben almacenarse:
 
-- repartidor perdió temporalmente su enlace;
-- repartidor solicita que lo marquen como no disponible;
-- dueño de flotilla solicita actualizar una unidad;
-- problema operativo durante el piloto.
+- dentro de MySQL;
+- dentro del repositorio;
+- dentro de /public de forma dinámica;
+- en almacenamiento temporal de Vercel.
 
-Los estados disponibles serán los mismos definidos para /u/[token]:
+MySQL almacenará únicamente la URL pública/segura entregada por
+Cloudinary.
 
-- disponible;
-- ocupado;
-- no_disponible.
+Campo existente:
 
-Aplicar exactamente las mismas reglas temporales:
+    dat_servicios.logo_url
 
-Disponible:
+Debe almacenar preferentemente:
 
-    NOW() + 3 horas
+    secure_url
 
-Ocupado:
+entregada por Cloudinary.
 
-    NOW() + 1 hora
+--------------------------------------------------
+51.7.1 Gestión desde /admin
+--------------------------------------------------
 
-No disponible:
+El panel administrativo permitirá:
 
-    estado_hasta = NULL
+- seleccionar un logo;
+- mostrar vista previa local antes de subir;
+- subir el logo a Cloudinary;
+- mostrar el logo actualmente configurado;
+- reemplazar el logo;
+- eliminar el logo;
+- dejar un servicio sin logo.
 
-Los cambios administrativos deben generar también un registro en:
+El logo será opcional.
 
-    log_estados_unidad
+Si un servicio no tiene logo, la aplicación utilizará el ícono/fallback
+visual predeterminado.
 
-No crear una segunda lógica de disponibilidad para el administrador.
-Reutilizar la misma lógica de dominio utilizada por /u/[token].
+--------------------------------------------------
+51.7.2 Formatos permitidos
+--------------------------------------------------
 
-**TablePlus será el panel administrativo.**
+Aceptar inicialmente:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Validar tipo de archivo tanto como sea razonablemente posible.
+
+Aplicar un límite de tamaño apropiado para logos.
+
+Valor inicial recomendado para el MVP:
+
+    máximo 3 MB
+
+No permitir archivos arbitrarios.
+
+--------------------------------------------------
+51.7.3 Organización en Cloudinary
+--------------------------------------------------
+
+Los logos deberán mantenerse organizados en Cloudinary.
+
+Utilizar una estructura predecible, por ejemplo:
+
+    servicios/{servicio_id}/logo
+
+El identificador del servicio debe utilizarse para evitar colisiones
+entre servicios con nombres similares.
+
+Ejemplo conceptual:
+
+    servicios/27/logo
+
+No utilizar como identificador único solamente el nombre visible del
+servicio.
+
+Siempre que sea posible, utilizar un public_id determinístico para el
+logo de cada servicio.
+
+Esto permite reemplazar o eliminar el archivo sin necesitar una segunda
+tabla de archivos.
+
+--------------------------------------------------
+51.7.4 Reemplazo de logo
+--------------------------------------------------
+
+Un servicio tendrá como máximo un logo principal durante el MVP.
+
+Cuando el administrador reemplace un logo:
+
+1. validar el nuevo archivo;
+2. subir/reemplazar el recurso correspondiente en Cloudinary;
+3. obtener el nuevo secure_url;
+4. actualizar dat_servicios.logo_url;
+5. reflejar el cambio en la landing.
+
+No crear acumulaciones innecesarias de logos antiguos cuando el modelo
+de public_id utilizado permita sobrescribir el recurso existente.
+
+Un fallo en la actualización del logo NO debe corromper los demás datos
+del servicio.
+
+--------------------------------------------------
+51.7.5 Eliminación de logo
+--------------------------------------------------
+
+La acción:
+
+    Eliminar logo
+
+debe:
+
+1. eliminar o invalidar el recurso correspondiente en Cloudinary cuando
+   sea posible;
+2. establecer:
+
+       dat_servicios.logo_url = NULL
+
+3. provocar que la landing vuelva automáticamente al fallback visual.
+
+La eliminación del logo NO debe eliminar el servicio.
+
+--------------------------------------------------
+51.7.6 Landing pública
+--------------------------------------------------
+
+Las tarjetas públicas de servicios utilizarán:
+
+    dat_servicios.logo_url
+
+Lógica:
+
+    si logo_url existe:
+        mostrar imagen del servicio
+
+    si logo_url es NULL:
+        mostrar fallback predeterminado
+
+Si una imagen externa falla al cargar, la tarjeta NO debe romperse.
+
+Debe mostrarse un fallback apropiado.
+
+Todos los logos deben mostrarse dentro de un contenedor de dimensiones
+visuales consistentes.
+
+Usar object-fit apropiado para evitar deformaciones.
+
+No asumir que todos los proveedores entregarán logos con la misma
+proporción.
+
+--------------------------------------------------
+51.7.7 Optimización
+--------------------------------------------------
+
+Aprovechar las capacidades de Cloudinary para servir imágenes
+optimizadas cuando sea razonablemente sencillo.
+
+El objetivo es evitar descargar archivos originales innecesariamente
+grandes en la landing.
+
+No implementar en esta fase un sistema avanzado de procesamiento de
+imágenes.
+
+Las transformaciones utilizadas deben estar orientadas únicamente a:
+
+- tamaño apropiado;
+- calidad web;
+- formato eficiente cuando aplique.
+
+--------------------------------------------------
+51.7.8 Seguridad de Cloudinary
+--------------------------------------------------
+
+Las credenciales administrativas de Cloudinary deben existir
+exclusivamente como variables de entorno del servidor.
+
+Nunca exponer al navegador:
+
+    CLOUDINARY_API_SECRET
+
+Nunca incluir secretos de Cloudinary en:
+
+- repositorio;
+- código cliente;
+- URLs públicas;
+- logs;
+- respuestas API.
+
+Las operaciones que requieran privilegios de Cloudinary deben
+realizarse o autorizarse desde servidor.
+
+No implementar uploads públicos sin protección solamente para
+simplificar la funcionalidad.
+
+El endpoint administrativo de upload debe estar protegido por la misma
+autorización de /admin.
+
+--------------------------------------------------
+51.7.9 Variables de entorno
+--------------------------------------------------
+
+Documentar en:
+
+    .env.example
+
+las variables necesarias para Cloudinary.
+
+Ejemplo conceptual:
+
+    CLOUDINARY_CLOUD_NAME=
+    CLOUDINARY_API_KEY=
+    CLOUDINARY_API_SECRET=
+
+No incluir valores reales.
+
+Si la implementación existente utiliza CLOUDINARY_URL como
+configuración equivalente, mantener una única estrategia consistente.
+
+No introducir dos métodos distintos de configuración sin necesidad.
+
+--------------------------------------------------
+51.7.10 Fallos de Cloudinary
+--------------------------------------------------
+
+Cloudinary es un servicio externo y sus errores deben manejarse
+explícitamente.
+
+Si una subida falla:
+
+- informar al administrador;
+- no guardar una URL inválida;
+- no romper el servicio;
+- permitir volver a intentar.
+
+Si se está creando un proveedor nuevo y falla únicamente la subida del
+logo, el proveedor puede permanecer creado sin logo.
+
+El logo NO debe ser requisito para completar el alta de un servicio.
+
+La aplicación utilizará el fallback hasta que pueda subirse
+correctamente.
+
+**TablePlus continuará como herramienta administrativa técnica complementaria.**
 
 Desde TablePlus se debe poder:
 
@@ -1610,8 +1844,6 @@ Desde TablePlus se debe poder:
 - modificar cobertura;
 - consultar contactos;
 - consultar estados.
-
-NO crear `/admin` todavía.
 
 ---
 
@@ -1821,6 +2053,14 @@ Sobre la ruta `/[ciudad]` ya existente:
 - renovación;
 - precio base;
 - log_estados_unidad.
+
+## Fase técnica 6.1 — Administración operativa mínima
+
+- `/admin` protegido mediante `ADMIN_ACCESS_KEY`;
+- alta y edición operativa de servicios y unidades;
+- soporte administrativo de estados reutilizando la lógica de Fase 6;
+- generación y rotación de accesos privados de unidad;
+- copia y preparación de enlaces para compartir por WhatsApp.
 
 ## Fase técnica 7 — QA
 
@@ -2042,3 +2282,850 @@ del piloto, particularmente:
 - cantidad promedio de unidades por servicio;
 - frecuencia con la que un responsable administra varias unidades;
 - dificultad real de mantener estados por repartidor.
+
+# 65. Experiencia pública — navegación, búsqueda y ordenamiento
+
+La landing pública debe comunicar desde el MVP que Servicios {ciudad}
+es una plataforma de servicios locales y NO una aplicación exclusiva
+de motomandados.
+
+Durante el piloto, Mandados será la única categoría completamente
+funcional.
+
+La interfaz podrá mostrar otros tipos de servicio como parte de la
+visión futura de la plataforma, siempre identificándolos claramente
+como "Próximamente".
+
+El objetivo de esta sección es definir:
+
+- el propósito del bloque "¿Qué necesitas?";
+- el comportamiento del buscador principal;
+- la separación entre categorías y proveedores;
+- la información de disponibilidad mostrada al cliente;
+- el ordenamiento del listado de Mandados;
+- el comportamiento de "Recomendados";
+- el comportamiento de "Menor precio";
+- el tratamiento de categorías futuras;
+- la evolución posterior hacia una plataforma multicategoría.
+
+
+## 65.1 Bloque "¿Qué necesitas?"
+
+La landing debe conservar de forma visible un bloque principal:
+
+    ¿Qué necesitas?
+
+Este bloque tiene una función tanto operativa como de comunicación del
+producto.
+
+Debe permitir que el usuario entienda desde el piloto que Servicios
+{ciudad} está diseñado para ofrecer diferentes tipos de servicios
+locales y que Mandados representa únicamente la primera categoría
+funcional.
+
+Ejemplo conceptual:
+
+    ¿Qué necesitas?
+
+    [ Buscar servicios... ]
+
+    [ Mandados ]
+    [ Fletes · Próximamente ]
+    [ Taxis · Próximamente ]
+
+Mandados estará activo durante el MVP.
+
+Las demás categorías visibles deberán identificarse claramente como:
+
+    Próximamente
+
+mientras no exista funcionalidad real para ellas.
+
+No presentar una categoría futura como disponible si todavía no existe
+un flujo funcional para utilizarla.
+
+El bloque "¿Qué necesitas?" debe permanecer visible incluso mientras
+Mandados sea la única categoría funcional, ya que ayuda a comunicar la
+visión multicategoría de Servicios {ciudad}.
+
+
+## 65.2 Buscador principal
+
+El input:
+
+    Buscar servicios...
+
+representa una búsqueda de TIPOS o CATEGORÍAS DE SERVICIO.
+
+NO representa una búsqueda de proveedores individuales.
+
+Ejemplos:
+
+    "mandado"
+        → Mandados
+
+    "flete"
+        → Fletes · Próximamente
+
+    "taxi"
+        → Taxis · Próximamente
+
+El objetivo es ayudar al usuario a identificar qué tipo de servicio
+necesita.
+
+Durante esta etapa, el buscador puede funcionar como un filtro sencillo
+sobre las categorías visibles.
+
+No es necesario consultar MySQL para cada búsqueda si las categorías
+futuras todavía forman parte únicamente de la presentación de la
+landing.
+
+No implementar todavía:
+
+- búsqueda full-text;
+- motor externo de búsqueda;
+- autocomplete remoto;
+- búsquedas geográficas;
+- búsqueda semántica;
+- búsqueda por descripción de proveedores.
+
+
+## 65.3 Búsquedas sin resultados
+
+Si el usuario introduce un tipo de servicio que todavía no está
+contemplado, por ejemplo:
+
+    plomero
+
+y no existe una categoría correspondiente, mostrar una respuesta
+sencilla equivalente a:
+
+    No encontramos ese servicio por ahora.
+
+No inventar resultados.
+
+No redirigir automáticamente búsquedas desconocidas hacia Mandados.
+
+No presentar una categoría inexistente como "Próximamente" a menos que
+esa categoría forme realmente parte de las categorías futuras definidas
+por la aplicación.
+
+El estado vacío debe permitir que el usuario vuelva fácilmente a ver
+las categorías disponibles.
+
+
+## 65.4 Separación entre categorías y proveedores
+
+La experiencia pública debe mantener claramente separados dos niveles.
+
+NIVEL 1 — TIPO DE SERVICIO
+
+El bloque:
+
+    ¿Qué necesitas?
+
+permite descubrir o buscar categorías.
+
+Ejemplos:
+
+    Mandados
+    Fletes
+    Taxis
+
+NIVEL 2 — PROVEEDORES
+
+Una vez dentro de una categoría funcional, se muestran los proveedores
+que pueden prestar ese servicio.
+
+Ejemplos dentro de Mandados:
+
+    Motomandados Demo Centro
+    Mandadito Mía
+    Motomandados La Curva
+
+El buscador principal pertenece al NIVEL 1.
+
+Durante el MVP NO utilizar el buscador principal para filtrar por:
+
+- nombre del proveedor;
+- nombre de la empresa;
+- nombre de la unidad;
+- nombre del repartidor.
+
+Ejemplo:
+
+Buscar:
+
+    "Motomandados La Curva"
+
+NO debe considerarse el propósito principal del buscador:
+
+    Buscar servicios...
+
+Si en el futuro el volumen de proveedores justifica una búsqueda por
+nombre, deberá implementarse como una funcionalidad independiente.
+
+
+## 65.5 Listado de Mandados
+
+Durante el piloto:
+
+    /[ciudad]
+
+puede continuar mostrando directamente el listado completo de
+proveedores de Mandados.
+
+Ejemplo actual:
+
+    /tonala
+
+No es necesario crear todavía:
+
+    /tonala/mandados
+
+Mientras Mandados sea la única categoría funcional, introducir una
+segunda ruta únicamente agregaría navegación sin aportar suficiente
+valor.
+
+La landing puede contener:
+
+    Servicios Tonalá
+
+    ¿Qué necesitas?
+
+    [ Buscar servicios... ]
+
+    Categorías
+
+    Mandados
+    Fletes · Próximamente
+    Taxis · Próximamente
+
+    Mandados disponibles ahora
+
+    [ Recomendados ] [ Menor precio ]
+
+    [ proveedor ]
+    [ proveedor ]
+    [ proveedor ]
+
+
+## 65.6 Información de disponibilidad
+
+La landing debe priorizar información útil para el cliente.
+
+Evitar utilizar como métrica principal la cantidad total de servicios
+registrados en la plataforma, ya que puede incluir proveedores que no
+están disponibles en ese momento.
+
+En lugar de:
+
+    6 servicios · 4 unidades disponibles
+
+preferir una comunicación equivalente a:
+
+    4 repartidores disponibles ahora
+
+o, si la terminología de la interfaz lo requiere:
+
+    4 unidades disponibles ahora
+
+La cifra debe representar la suma REAL de unidades efectivamente
+disponibles.
+
+No contar:
+
+- unidades ocupadas;
+- unidades en estado no_disponible;
+- unidades cuya disponibilidad haya vencido;
+- unidades inactivas;
+- unidades pertenecientes a servicios que no deban mostrarse
+  públicamente.
+
+La disponibilidad efectiva debe utilizar exactamente las mismas reglas
+de negocio definidas para el resto del MVP.
+
+No crear una segunda lógica de disponibilidad exclusivamente para la
+landing.
+
+
+## 65.7 Control de ordenamiento
+
+El listado de proveedores de Mandados tendrá dos modos de ordenamiento
+visibles:
+
+    [ Recomendados ] [ Menor precio ]
+
+El modo predeterminado será:
+
+    Recomendados
+
+El control debe ser sencillo y apropiado para dispositivos móviles.
+
+Puede implementarse mediante:
+
+- chips;
+- botones;
+- segmented control;
+- otro control equivalente.
+
+Con solamente dos opciones no es necesario utilizar un select
+desplegable.
+
+Debe quedar visualmente claro cuál de las dos opciones está
+seleccionada.
+
+El estado seleccionado no debe depender exclusivamente del color.
+
+
+## 65.8 Orden "Recomendados"
+
+"Recomendados" representa el orden predeterminado del listado.
+
+Durante el MVP, "Recomendados" NO significa:
+
+- mejor valorado;
+- mayor número de reseñas;
+- proveedor verificado;
+- proveedor patrocinado;
+- proveedor que pagó por posicionamiento;
+- selección editorial;
+- mayor precio;
+- menor precio;
+- cercanía geográfica.
+
+El orden representa principalmente la capacidad real del servicio para
+atender al cliente en ese momento.
+
+Reglas:
+
+1. Los servicios con al menos una unidad efectivamente disponible
+   aparecen antes que los servicios sin disponibilidad.
+
+2. Entre los servicios disponibles, priorizar aquellos con mayor
+   cantidad de unidades efectivamente disponibles.
+
+3. Como siguiente criterio, priorizar la disponibilidad actualizada más
+   recientemente.
+
+4. En condiciones equivalentes puede utilizarse el mecanismo de
+   rotación/desempate existente para evitar favorecer permanentemente
+   al mismo servicio.
+
+5. Los servicios sin disponibilidad efectiva aparecerán después de los
+   servicios disponibles cuando la landing decida mantenerlos visibles.
+
+6. El precio NO participa en el orden "Recomendados".
+
+Ejemplo:
+
+    Servicio A
+    2 unidades disponibles
+    Desde $50
+
+    Servicio B
+    1 unidad disponible
+    Desde $30
+
+En "Recomendados", el Servicio A puede aparecer primero debido a que
+tiene mayor capacidad disponible.
+
+El hecho de que su precio sea mayor NO es la razón de su posición.
+
+
+## 65.9 Orden "Menor precio"
+
+Cuando el usuario seleccione:
+
+    Menor precio
+
+los servicios deberán ordenarse priorizando primero la disponibilidad y
+posteriormente el precio.
+
+Reglas:
+
+1. Servicios con disponibilidad efectiva antes que servicios sin
+   disponibilidad.
+
+2. Entre los servicios disponibles:
+
+       precio_desde ASC
+
+3. Si dos servicios tienen el mismo precio_desde, utilizar como
+   desempate:
+
+       mayor cantidad de unidades disponibles
+
+4. Como siguiente desempate:
+
+       disponibilidad actualizada más recientemente
+
+5. Los servicios sin disponibilidad permanecerán después de los
+   disponibles.
+
+Un servicio NO disponible nunca debe aparecer antes que un servicio
+disponible únicamente por tener un precio histórico inferior.
+
+
+## 65.10 Cálculo de "Desde $X"
+
+El orden "Menor precio" debe utilizar exactamente el mismo
+precio_desde mostrado en la tarjeta pública.
+
+precio_desde corresponde a:
+
+    MIN(precio_base)
+
+exclusivamente entre las unidades EFECTIVAMENTE DISPONIBLES del
+servicio.
+
+Ejemplo:
+
+    Unidad 1
+    Disponible
+    $40
+
+    Unidad 2
+    Ocupado
+    $25
+
+Resultado:
+
+    Desde $40
+
+NO:
+
+    Desde $25
+
+Otro ejemplo:
+
+    Unidad 1
+    Disponible pero estado_hasta vencido
+    $20
+
+    Unidad 2
+    Disponible y vigente
+    $45
+
+Resultado:
+
+    Desde $45
+
+Las unidades:
+
+- ocupadas;
+- no disponibles;
+- vencidas;
+- inactivas;
+
+NO deben modificar precio_desde.
+
+Esta regla debe ser compartida por:
+
+- tarjeta pública;
+- orden "Menor precio";
+- mensaje de contacto;
+- demás funcionalidades que utilicen precio_desde.
+
+No duplicar el cálculo con implementaciones diferentes.
+
+
+## 65.11 Servicios sin disponibilidad
+
+Los servicios sin disponibilidad efectiva pueden continuar visibles
+durante el piloto, pero siempre deberán aparecer después de los
+servicios disponibles.
+
+Esto aplica tanto para:
+
+    Recomendados
+
+como para:
+
+    Menor precio
+
+Un proveedor no disponible no debe adelantarse a un proveedor
+disponible debido a:
+
+- precio;
+- nombre;
+- orden de creación;
+- ID;
+- cualquier otro criterio secundario.
+
+La interfaz debe comunicar claramente que el servicio no está
+disponible en ese momento.
+
+Si no existe un precio_desde efectivo porque no existe ninguna unidad
+disponible, no inventar un precio público utilizando unidades no
+disponibles únicamente para poder ordenar la tarjeta.
+
+Mantener el tratamiento definido por las reglas generales del MVP para
+servicios sin disponibilidad.
+
+
+## 65.12 Estado del ordenamiento
+
+La selección:
+
+    Recomendados
+    Menor precio
+
+es únicamente una preferencia temporal de presentación.
+
+Durante el MVP no debe almacenarse en:
+
+- MySQL;
+- cookies;
+- localStorage;
+- sessionStorage;
+- session_id;
+- perfil de usuario.
+
+No existe una cuenta de cliente asociada a esta preferencia.
+
+Al cargar o recargar la landing, el orden predeterminado debe volver a:
+
+    Recomendados
+
+Cambiar entre ambos modos no debe realizar escrituras en base de datos.
+
+Cuando los datos necesarios ya se encuentran disponibles en la página,
+el cambio de orden debe realizarse sin consultas innecesarias al
+servidor.
+
+
+## 65.13 Eliminación de "Ver todos"
+
+Durante el piloto eliminar:
+
+    Ver todos
+
+del encabezado del listado de Mandados cuando el listado ya representa
+todos los proveedores correspondientes.
+
+No mantener controles únicamente como decoración.
+
+No crear una ruta nueva solamente para justificar la existencia de:
+
+    Ver todos
+
+Durante la configuración actual:
+
+    /tonala
+
+ya presenta directamente el listado de Mandados.
+
+Por lo tanto, "Ver todos" no proporciona una acción adicional útil.
+
+
+## 65.14 Uso futuro de "Ver todos"
+
+"Ver todos" podrá reincorporarse cuando exista más de una categoría
+funcional y /[ciudad] evolucione hacia una verdadera home/directorio.
+
+Ejemplo futuro:
+
+    Servicios Tonalá
+
+    Mandados disponibles                  Ver todos →
+    [ proveedor ]
+    [ proveedor ]
+    [ proveedor ]
+
+    Fletes disponibles                    Ver todos →
+    [ proveedor ]
+    [ proveedor ]
+    [ proveedor ]
+
+En ese escenario, la home podrá mostrar únicamente una muestra de cada
+categoría.
+
+Entonces:
+
+    Ver todos → Mandados
+
+podrá conducir a:
+
+    /tonala/mandados
+
+y:
+
+    Ver todos → Fletes
+
+podrá conducir a:
+
+    /tonala/fletes
+
+Esta funcionalidad NO debe implementarse mientras Mandados sea la única
+categoría funcional.
+
+
+## 65.15 Categorías futuras
+
+La arquitectura visual debe comunicar que Servicios {ciudad} está
+preparado para evolucionar hacia diferentes categorías.
+
+Ejemplos conceptuales:
+
+    Mandados
+    Fletes
+    Taxis
+    Plomería
+    Electricidad
+
+La presencia de una categoría en la interfaz NO significa que deba
+implementarse funcionalmente durante el piloto.
+
+Durante el MVP:
+
+    Mandados = funcional
+
+Las demás categorías que se decida mostrar deben identificarse como:
+
+    Próximamente
+
+No crear proveedores ficticios para aparentar disponibilidad.
+
+No crear páginas vacías únicamente para categorías futuras.
+
+No permitir acciones de contacto para categorías que todavía no estén
+operativas.
+
+La lista definitiva de categorías futuras no queda cerrada por esta
+sección.
+
+Las categorías podrán definirse posteriormente según validación del
+mercado y necesidades locales.
+
+
+## 65.16 Evolución futura de navegación
+
+Cuando exista al menos una segunda categoría funcional, deberá
+evaluarse la evolución de la navegación.
+
+Arquitectura conceptual futura:
+
+    /tonala
+        → home/directorio de la ciudad
+
+    /tonala/mandados
+        → listado de proveedores de Mandados
+
+    /tonala/fletes
+        → listado de proveedores de Fletes
+
+    /tonala/taxis
+        → listado de proveedores de Taxis
+
+Posteriormente, si las fichas individuales lo requieren:
+
+    /tonala/mandados/{servicio}
+
+    /tonala/fletes/{servicio}
+
+La estructura definitiva deberá diseñarse cuando se implemente la
+segunda categoría funcional.
+
+NO realizar esta migración durante la Fase 6.2.
+
+
+## 65.17 Evolución futura del buscador
+
+Cuando existan múltiples categorías funcionales, el buscador principal
+podrá evolucionar para consultar un catálogo real de tipos de servicio.
+
+En ese momento podrá evaluarse:
+
+- catálogo persistente de categorías;
+- aliases/sinónimos;
+- búsqueda por palabras clave;
+- autocomplete;
+- rutas por categoría;
+- sugerencias de servicios.
+
+Ejemplo futuro:
+
+    "mudanza"
+        → Fletes / Mudanzas
+
+    "llevar paquete"
+        → Mandados
+
+    "taxi"
+        → Taxis
+
+Estas capacidades NO forman parte de la Fase 6.2.
+
+No introducir una arquitectura compleja únicamente para anticipar esta
+funcionalidad.
+
+
+## 65.18 Búsqueda futura de proveedores
+
+La búsqueda de proveedores es conceptualmente distinta de la búsqueda
+de tipos de servicio.
+
+Durante el MVP no es necesaria debido al volumen reducido de
+proveedores.
+
+Si en el futuro una categoría contiene suficientes proveedores para
+justificarlo, podrá incorporarse dentro del listado correspondiente un
+control independiente:
+
+    Buscar proveedor...
+
+Este buscador podrá filtrar:
+
+- nombre del servicio;
+- eventualmente descripción;
+- otros atributos públicos relevantes.
+
+No mezclar esta funcionalidad con:
+
+    ¿Qué necesitas?
+    Buscar servicios...
+
+El primer buscador responde:
+
+    ¿Qué tipo de servicio necesitas?
+
+El segundo, si algún día existe, responderá:
+
+    ¿Qué proveedor estás buscando?
+
+
+## 65.19 Principios de experiencia de usuario
+
+La landing debe priorizar decisiones simples para el cliente.
+
+El usuario que necesita un mandado debe poder comprender rápidamente:
+
+1. que Mandados está disponible;
+2. cuántos repartidores/unidades están disponibles;
+3. qué proveedores pueden atenderlo;
+4. desde qué precio ofrecen el servicio;
+5. cómo contactarlos.
+
+La expansión futura de la plataforma debe comunicarse sin interferir
+con este flujo principal.
+
+Evitar controles sin funcionalidad.
+
+Evitar filtros que no aporten una decisión real.
+
+Evitar métricas internas que no sean útiles para el cliente.
+
+Evitar presentar funcionalidades futuras como si ya estuvieran
+disponibles.
+
+
+## 65.20 Fuera del alcance de la Fase 6.2
+
+No implementar durante esta fase:
+
+- nuevas categorías funcionales;
+- proveedores ficticios para categorías futuras;
+- rutas /[ciudad]/mandados;
+- rutas /[ciudad]/fletes;
+- rutas /[ciudad]/taxis;
+- buscador de proveedores;
+- búsqueda full-text;
+- autocomplete remoto;
+- catálogo complejo de categorías;
+- filtros por colonia;
+- filtros por distancia;
+- geolocalización;
+- GPS;
+- mapas;
+- reseñas;
+- estrellas;
+- "Mejor valorados";
+- "Más cercanos";
+- ranking comercial;
+- posicionamiento pagado;
+- servicios patrocinados;
+- recomendaciones personalizadas;
+- persistencia de preferencias de ordenamiento;
+- cambios al sistema administrativo;
+- cambios al sistema de tokens;
+- cambios al panel privado de unidades.
+
+
+## 65.21 Criterios de aceptación de la Fase 6.2
+
+La Fase 6.2 se considerará funcionalmente completa cuando:
+
+1. /tonala continúe funcionando correctamente.
+
+2. El bloque "¿Qué necesitas?" permanezca visible.
+
+3. El input "Buscar servicios..." permanezca visible y represente
+   categorías/tipos de servicio.
+
+4. Mandados se identifique como categoría funcional.
+
+5. Las categorías futuras visibles se identifiquen claramente como
+   "Próximamente".
+
+6. Una búsqueda correspondiente a Mandados pueda identificar la
+   categoría Mandados.
+
+7. Una búsqueda correspondiente a una categoría futura visible pueda
+   identificarla como "Próximamente".
+
+8. Una búsqueda desconocida muestre un estado vacío comprensible.
+
+9. El buscador principal NO filtre proveedores por nombre.
+
+10. El texto/control "Ver todos" haya sido eliminado del listado actual
+    de Mandados.
+
+11. La landing no utilice como métrica principal la cantidad total de
+    servicios registrados.
+
+12. El contador de disponibilidad utilice exclusivamente unidades
+    efectivamente disponibles.
+
+13. Exista el control:
+
+        Recomendados | Menor precio
+
+14. "Recomendados" sea la opción predeterminada.
+
+15. "Recomendados" priorice servicios con mayor disponibilidad según
+    las reglas definidas.
+
+16. El precio no influya en "Recomendados".
+
+17. "Menor precio" ordene los servicios disponibles utilizando
+    precio_desde ascendente.
+
+18. precio_desde considere exclusivamente unidades efectivamente
+    disponibles.
+
+19. Servicios no disponibles permanezcan después de los disponibles en
+    ambos modos.
+
+20. Cambiar el orden no escriba preferencias en base de datos.
+
+21. Recargar la página vuelva a "Recomendados".
+
+22. WhatsApp continúe funcionando.
+
+23. Llamar continúe funcionando.
+
+24. La medición de contactos existente continúe funcionando.
+
+25. /u/[token] continúe funcionando.
+
+26. /admin continúe funcionando.
+
+27. La experiencia sea utilizable correctamente en móvil.
+
+28. La experiencia continúe funcionando correctamente en desktop.
+
+29. No sea necesaria ninguna migración de base de datos para completar
+    esta fase.
+
+30. No se introduzcan funcionalidades fuera del alcance establecido.
