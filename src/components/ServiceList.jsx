@@ -1,7 +1,7 @@
 import { Bike } from "lucide-react";
 import ServiceCard from "./ServiceCard";
 
-export default function ServiceList({ citySlug, services, totals }) {
+export default function ServiceList({ citySlug, services }) {
   if (services.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-blue-200 bg-white px-5 py-8 text-center">
@@ -13,15 +13,10 @@ export default function ServiceList({ citySlug, services, totals }) {
   }
 
   return (
-    <>
-      <p className="mb-2.5 text-[0.7rem] font-semibold text-slate-500">
-        {totals.availableUnits} {totals.availableUnits === 1 ? "unidad disponible" : "unidades disponibles"}
-      </p>
-      <div className="space-y-3">
-        {services.map((service) => (
-          <ServiceCard key={service.id} citySlug={citySlug} service={service} />
-        ))}
-      </div>
-    </>
+    <div className="space-y-3">
+      {services.map((service) => (
+        <ServiceCard key={service.id} citySlug={citySlug} service={service} />
+      ))}
+    </div>
   );
 }
