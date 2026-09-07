@@ -1,7 +1,7 @@
 import AdminPanel from "@/components/AdminPanel";
 
 export const metadata = {
-  title: "Administración | Servicios locales",
+  title: "Administración",
   robots: { index: false, follow: false },
 };
 

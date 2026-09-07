@@ -4,9 +4,9 @@ import ServiceCard from "./ServiceCard";
 export default function ServiceList({ citySlug, services }) {
   if (services.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-blue-200 bg-white px-5 py-8 text-center">
-        <Bike className="mx-auto text-blue-600" aria-hidden="true" size={28} />
-        <p className="mt-3 text-sm font-extrabold text-[#101a5c]">Sin servicios publicados</p>
+      <div className="rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--brand-blue)_22%,white)] bg-white px-5 py-8 text-center">
+        <Bike className="mx-auto text-[var(--brand-blue)]" aria-hidden="true" size={28} />
+        <p className="mt-3 text-sm font-extrabold text-[var(--brand-navy)]">Sin servicios publicados</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">Todavía no hay motomandados visibles en esta ciudad.</p>
       </div>
     );

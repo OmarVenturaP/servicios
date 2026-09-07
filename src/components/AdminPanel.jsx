@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Check, CheckCircle2, ChevronLeft, Copy, ImageIcon, KeyRound, Plus, Search, Settings2, Trash2, Upload, X, XCircle } from "lucide-react";
+import BrandMark from "./BrandMark";
+import Header from "./Header";
 
 const inputClass = "mt-1 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-950";
 const labelClass = "block text-sm font-bold text-slate-600";
-const primaryButton = "flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-base font-extrabold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50";
+const primaryButton = "brand-primary-action flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-extrabold shadow-sm disabled:cursor-not-allowed disabled:opacity-50";
 const cardClass = "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm";
 const maxLogoBytes = 3 * 1024 * 1024;
 const allowedLogoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -238,19 +240,22 @@ export default function AdminPanel() {
 
   if (!data) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-slate-100 px-4 py-10">
-        <form onSubmit={login} className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
-          <div className="grid size-12 place-items-center rounded-2xl bg-blue-50 text-blue-700"><KeyRound aria-hidden="true" /></div>
-          <p className="mt-5 text-sm font-extrabold text-blue-700">Servicios Tonalá</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Administración</h1>
-          <label className={`${labelClass} mt-6`}>
-            Clave de acceso
-            <input className={inputClass} type="password" autoComplete="off" value={accessKey} onChange={(event) => setAccessKey(event.target.value)} required />
-          </label>
-          <button className={`${primaryButton} mt-4`} disabled={pending}>{pending ? "Validando..." : "Entrar"}</button>
-          {feedback ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{feedback.message}</p> : null}
-        </form>
-      </main>
+      <div className="min-h-screen bg-[#eef1f6] py-0 sm:py-8">
+        <main className="relative mx-auto grid min-h-screen w-full place-items-center overflow-hidden bg-[#fbfcff] shadow-[0_20px_70px_rgba(15,23,42,0.16)] sm:min-h-[840px] sm:max-w-[430px] sm:rounded-[2.25rem] px-5 py-10">
+          <form onSubmit={login} className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+            <BrandMark className="mb-6" />
+            <div className="brand-soft-surface grid size-12 place-items-center rounded-2xl border text-[var(--brand-blue)]"><KeyRound aria-hidden="true" /></div>
+            <p className="mt-5 text-sm font-extrabold text-[var(--brand-blue)]">Panel master</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Administración</h1>
+            <label className={`${labelClass} mt-6`}>
+              Clave de acceso
+              <input className={inputClass} type="password" autoComplete="off" value={accessKey} onChange={(event) => setAccessKey(event.target.value)} required />
+            </label>
+            <button className={`${primaryButton} mt-4`} disabled={pending}>{pending ? "Validando..." : "Entrar"}</button>
+            {feedback ? <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{feedback.message}</p> : null}
+          </form>
+        </main>
+      </div>
     );
   }
 
@@ -300,7 +305,7 @@ export default function AdminPanel() {
         </section>
 
         <section className={`${cardClass} mt-4`}>
-          <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">Unidades</h2><button type="button" onClick={() => setShowAddUnit(!showAddUnit)} className="flex min-h-10 items-center gap-1 rounded-xl bg-blue-50 px-3 text-sm font-extrabold text-blue-700"><Plus size={17} /> Agregar</button></div>
+          <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">Unidades</h2><button type="button" onClick={() => setShowAddUnit(!showAddUnit)} className="brand-soft-surface flex min-h-10 items-center gap-1 rounded-xl border px-3 text-sm font-extrabold text-[var(--brand-blue)]"><Plus size={17} /> Agregar</button></div>
           {showAddUnit ? <UnitCreateForm pending={pending} onSubmit={addUnitFromForm} onCancel={() => setShowAddUnit(false)} /> : null}
           {selectedService.units.length ? (
             <>
@@ -317,18 +322,18 @@ export default function AdminPanel() {
     <AdminShell title="Servicios" subtitle="Administración operativa" feedback={feedback}>
       <div className="relative"><Search className="absolute left-3 top-3.5 text-slate-400" size={19} /><input aria-label="Buscar servicio" className={`${inputClass} mt-0 pl-10`} placeholder="Buscar servicio" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
       <button type="button" onClick={() => { setShowCreate(true); setFeedback(null); }} className={`${primaryButton} mt-3`}><Plus size={19} /> Nuevo proveedor</button>
-      <div className="mt-4 grid gap-3">{filteredServices.map((service) => { const status = serviceStatus(service); return <article key={service.id} className={cardClass}><div className="flex items-center gap-3"><AdminServiceThumbnail key={service.logoUrl || `fallback-${service.id}`} service={service} /><div className="min-w-0 flex-1"><p className="text-xs font-bold uppercase tracking-wide text-blue-700">{service.cityName}</p><div className="mt-1 flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ring-2 ring-white ${status.color}`} role="img" aria-label={`Estado: ${status.label}`} title={status.label} /><h2 className="truncate text-lg font-black text-slate-950">{service.name}</h2></div><p className="mt-1 text-sm text-slate-500">{service.units.length} {service.units.length === 1 ? "unidad" : "unidades"}</p></div></div><button type="button" onClick={() => openService(service)} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 text-sm font-extrabold text-white"><Settings2 size={17} /> Administrar</button></article>; })}</div>
+      <div className="mt-4 grid gap-3">{filteredServices.map((service) => { const status = serviceStatus(service); return <article key={service.id} className={cardClass}><div className="flex items-center gap-3"><AdminServiceThumbnail key={service.logoUrl || `fallback-${service.id}`} service={service} /><div className="min-w-0 flex-1"><p className="text-xs font-bold uppercase tracking-wide text-[var(--brand-blue)]">{service.cityName}</p><div className="mt-1 flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ring-2 ring-white ${status.color}`} role="img" aria-label={`Estado: ${status.label}`} title={status.label} /><h2 className="truncate text-lg font-black text-slate-950">{service.name}</h2></div><p className="mt-1 text-sm text-slate-500">{service.units.length} {service.units.length === 1 ? "unidad" : "unidades"}</p></div></div><button type="button" onClick={() => openService(service)} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-navy)] text-sm font-extrabold text-white"><Settings2 size={17} /> Administrar</button></article>; })}</div>
     </AdminShell>
   );
 }
 
 function AdminShell({ title, subtitle, onBack, feedback, children }) {
-  return <main className="mx-auto min-h-dvh w-full max-w-[520px] bg-slate-50 px-4 py-6 sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-slate-200 sm:p-6 sm:shadow-xl">{feedback ? <Toast feedback={feedback} /> : null}<header className="mb-5 flex items-start gap-3">{onBack ? <button type="button" onClick={onBack} aria-label="Volver" className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white"><ChevronLeft /></button> : null}<div><p className="text-sm font-extrabold text-blue-700">Panel master</p><h1 className="text-2xl font-black text-slate-950">{title}</h1>{subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}</div></header>{children}</main>;
+  return <main className="relative mx-auto min-h-screen w-full overflow-hidden bg-[#fbfcff] shadow-[0_20px_70px_rgba(15,23,42,0.16)] sm:min-h-[840px] sm:max-w-[430px] sm:rounded-[2.25rem]"><Header /><div className="px-5 pb-8 pt-4">{feedback ? <Toast feedback={feedback} /> : null}<header className="mb-5 flex items-start gap-3">{onBack ? <button type="button" onClick={onBack} aria-label="Volver" className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white"><ChevronLeft /></button> : null}<div><p className="text-sm font-extrabold text-[var(--brand-blue)]">Administración</p><h1 className="text-2xl font-semibold text-slate-950">{title}</h1>{subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}</div></header>{children}</div></main>;
 }
 
 function LogoPicker({ currentUrl = null, value, onChange, disabled }) {
   const source = value.preview || currentUrl;
-  return <div><label className={labelClass}>Logo opcional<input key={source || "empty-logo"} type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onChange={onChange} disabled={disabled} className="mt-1 block w-full cursor-pointer rounded-xl border border-slate-300 bg-white text-sm text-slate-600 file:mr-3 file:min-h-11 file:border-0 file:bg-blue-50 file:px-3 file:font-extrabold file:text-blue-700 disabled:opacity-50" /></label><p className="mt-1 text-xs text-slate-500">JPG, PNG o WEBP. Máximo 3 MB.</p><div className="mt-3 grid min-h-28 place-items-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50">{source ? <div className="relative size-28"><Image src={source} alt="Vista previa del logo" fill sizes="112px" unoptimized={Boolean(value.preview)} className="object-contain p-2" /></div> : <div className="grid justify-items-center gap-2 p-4 text-slate-400"><ImageIcon size={28} aria-hidden="true" /><span className="text-sm font-bold">Sin logo</span></div>}</div>{value.file ? <p className="mt-2 truncate text-xs font-bold text-blue-700">Vista previa: {value.file.name}</p> : null}</div>;
+  return <div><label className={labelClass}>Logo opcional<input key={source || "empty-logo"} type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onChange={onChange} disabled={disabled} className="mt-1 block w-full cursor-pointer rounded-xl border border-slate-300 bg-white text-sm text-slate-600 file:mr-3 file:min-h-11 file:border-0 file:bg-[color:color-mix(in_srgb,var(--brand-blue)_8%,white)] file:px-3 file:font-extrabold file:text-[var(--brand-blue)] disabled:opacity-50" /></label><p className="mt-1 text-xs text-slate-500">JPG, PNG o WEBP. Máximo 3 MB.</p><div className="mt-3 grid min-h-28 place-items-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50">{source ? <div className="relative size-28"><Image src={source} alt="Vista previa del logo" fill sizes="112px" unoptimized={Boolean(value.preview)} className="object-contain p-2" /></div> : <div className="grid justify-items-center gap-2 p-4 text-slate-400"><ImageIcon size={28} aria-hidden="true" /><span className="text-sm font-bold">Sin logo</span></div>}</div>{value.file ? <p className="mt-2 truncate text-xs font-bold text-[var(--brand-blue)]">Vista previa: {value.file.name}</p> : null}</div>;
 }
 
 function AdminServiceThumbnail({ service }) {
@@ -355,5 +360,5 @@ function UnitEditor({ unit, service, pending, generatedAccess, onSave, onStatus,
       setCopied(false);
     }
   };
-  return <div className="mt-4 border-t border-slate-200 pt-4"><p className="text-sm font-bold text-slate-500">Estado efectivo</p><p className="mt-1 text-lg font-black text-slate-900">{statusLabel(unit)}</p><form onSubmit={onSave} className="mt-4 grid gap-3"><FormField label="Nombre" name="name" defaultValue={unit.name} /><FormField label="Teléfono" name="phone" defaultValue={unit.phone} /><FormField label="WhatsApp" name="whatsapp" defaultValue={unit.whatsapp} /><FormField label="Precio base" name="priceBase" type="number" defaultValue={unit.priceBase} required /><label className="flex min-h-11 items-center gap-3 text-sm font-bold text-slate-700"><input type="checkbox" name="active" value="true" defaultChecked={unit.active} className="size-5" /> Unidad activa</label><button className={primaryButton} disabled={pending}>Guardar unidad</button></form><div className="mt-5 grid grid-cols-3 gap-2"><button disabled={pending} onClick={() => onStatus("disponible")} className="min-h-11 rounded-xl bg-emerald-500 px-2 text-xs font-extrabold text-white">Disponible</button><button disabled={pending} onClick={() => onStatus("ocupado")} className="min-h-11 rounded-xl bg-amber-500 px-2 text-xs font-extrabold text-white">Ocupado</button><button disabled={pending} onClick={() => onStatus("terminar")} className="min-h-11 rounded-xl border border-slate-300 px-2 text-xs font-extrabold text-slate-700">No disponible</button></div><button type="button" disabled={pending} onClick={onAccess} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 font-extrabold text-white"><KeyRound size={18} /> {unit.hasAccess ? "Rotar acceso" : "Generar acceso"}</button>{generatedAccess ? <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4"><p className="font-black text-violet-950">Acceso privado generado</p><p className="mt-2 break-all text-sm text-violet-900">{generatedAccess.privateUrl}</p><p className="mt-3 text-sm leading-5 text-violet-800">Guarda o comparte este enlace ahora. Por seguridad no podremos recuperarlo posteriormente. Si se pierde tendrás que generar uno nuevo.</p><div className="mt-3 grid gap-2"><button type="button" onClick={copyAccess} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white font-extrabold text-violet-700"><Copy size={17} /> {copied ? "Enlace copiado" : "Copiar enlace"}</button>{generatedAccess.whatsappUrl ? <a href={generatedAccess.whatsappUrl} target="_blank" rel="noreferrer" className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-500 font-extrabold text-white"><Check size={17} /> Compartir por WhatsApp</a> : null}</div></div> : null}<p className="mt-3 text-xs text-slate-400">Servicio: {service.name}</p></div>;
+  return <div className="mt-4 border-t border-slate-200 pt-4"><p className="text-sm font-bold text-slate-500">Estado efectivo</p><p className="mt-1 text-lg font-black text-slate-900">{statusLabel(unit)}</p><form onSubmit={onSave} className="mt-4 grid gap-3"><FormField label="Nombre" name="name" defaultValue={unit.name} /><FormField label="Teléfono" name="phone" defaultValue={unit.phone} /><FormField label="WhatsApp" name="whatsapp" defaultValue={unit.whatsapp} /><FormField label="Precio base" name="priceBase" type="number" defaultValue={unit.priceBase} required /><label className="flex min-h-11 items-center gap-3 text-sm font-bold text-slate-700"><input type="checkbox" name="active" value="true" defaultChecked={unit.active} className="size-5" /> Unidad activa</label><button className={primaryButton} disabled={pending}>Guardar unidad</button></form><div className="mt-5 grid grid-cols-3 gap-2"><button disabled={pending} onClick={() => onStatus("disponible")} className="min-h-11 rounded-xl bg-emerald-500 px-2 text-xs font-extrabold text-white">Disponible</button><button disabled={pending} onClick={() => onStatus("ocupado")} className="min-h-11 rounded-xl bg-amber-500 px-2 text-xs font-extrabold text-white">Ocupado</button><button disabled={pending} onClick={() => onStatus("terminar")} className="min-h-11 rounded-xl border border-slate-300 px-2 text-xs font-extrabold text-slate-700">No disponible</button></div><button type="button" disabled={pending} onClick={onAccess} className="brand-primary-action mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 font-extrabold shadow-sm"><KeyRound size={18} /> {unit.hasAccess ? "Rotar acceso" : "Generar acceso"}</button>{generatedAccess ? <div className="brand-soft-surface mt-4 rounded-xl border p-4"><p className="font-black text-[var(--brand-navy)]">Acceso privado generado</p><p className="mt-2 break-all text-sm text-[var(--brand-blue)]">{generatedAccess.privateUrl}</p><p className="mt-3 text-sm leading-5 text-slate-700">Guarda o comparte este enlace ahora. Por seguridad no podremos recuperarlo posteriormente. Si se pierde tendrás que generar uno nuevo.</p><div className="mt-3 grid gap-2"><button type="button" onClick={copyAccess} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white font-extrabold text-[var(--brand-blue)]"><Copy size={17} /> {copied ? "Enlace copiado" : "Copiar enlace"}</button>{generatedAccess.whatsappUrl ? <a href={generatedAccess.whatsappUrl} target="_blank" rel="noreferrer" className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-500 font-extrabold text-white"><Check size={17} /> Compartir por WhatsApp</a> : null}</div></div> : null}<p className="mt-3 text-xs text-slate-400">Servicio: {service.name}</p></div>;
 }

@@ -12,7 +12,7 @@ const channels = {
   llamada: {
     label: "Llamar",
     Icon: Phone,
-    className: "bg-blue-600 hover:bg-blue-700",
+    className: "bg-[var(--brand-blue)] hover:brightness-95",
   },
 };
 

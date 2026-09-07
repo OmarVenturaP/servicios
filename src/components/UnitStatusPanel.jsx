@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, Clock3, Power, Save, TimerReset } from "lucide-react";
+import Header from "./Header";
 
 const statusContent = {
   disponible: { label: "Disponible", dot: "bg-emerald-500", text: "text-emerald-700" },
@@ -64,14 +65,16 @@ export default function UnitStatusPanel({ token, initialUnit }) {
   };
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-[430px] bg-slate-50 px-4 py-6 sm:my-8 sm:min-h-0 sm:rounded-[2rem] sm:border sm:border-slate-200 sm:px-6 sm:py-8 sm:shadow-xl">
-      <header className="border-b border-slate-200 pb-5">
-        <p className="text-sm font-extrabold text-blue-700">Servicios {unit.cityName}</p>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{unit.serviceName}</h1>
-        {unit.unitName ? <p className="mt-1 text-base font-medium text-slate-500">{unit.unitName}</p> : null}
-      </header>
+    <main className="relative mx-auto min-h-screen w-full overflow-hidden bg-[#fbfcff] shadow-[0_20px_70px_rgba(15,23,42,0.16)] sm:min-h-[840px] sm:max-w-[430px] sm:rounded-[2.25rem]">
+      <Header />
+      <div className="px-5 pb-8 pt-4">
+        <header className="border-b border-slate-200 pb-5">
+          <p className="text-sm font-extrabold text-[var(--brand-blue)]">Servicio en {unit.cityName}</p>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{unit.serviceName}</h1>
+          {unit.unitName ? <p className="mt-1 text-base font-medium text-slate-500">{unit.unitName}</p> : null}
+        </header>
 
-      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <p className="text-sm font-bold text-slate-500">Tu estado</p>
         <div className={`mt-2 flex items-center gap-2 text-xl font-black ${status.text}`}>
           <span className={`size-3 rounded-full ${status.dot}`} aria-hidden="true" />
@@ -90,7 +93,7 @@ export default function UnitStatusPanel({ token, initialUnit }) {
             type="button"
             disabled={pending !== null}
             onClick={() => changeStatus("renovar", "Disponibilidad renovada por 3 horas.")}
-            className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 text-base font-extrabold text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-55"
+            className="brand-soft-surface mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 text-base font-extrabold text-[var(--brand-blue)] transition disabled:cursor-not-allowed disabled:opacity-55"
           >
             <TimerReset aria-hidden="true" size={19} />
             {pending === "renovar" ? "Renovando..." : "Renovar 3 horas"}
@@ -117,7 +120,7 @@ export default function UnitStatusPanel({ token, initialUnit }) {
             className="min-h-12 min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 text-lg font-bold text-slate-950"
           />
         </div>
-        <button type="submit" disabled={pending !== null} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-base font-extrabold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-55">
+        <button type="submit" disabled={pending !== null} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-navy)] px-4 text-base font-extrabold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-55">
           <Save aria-hidden="true" size={18} />
           {pending === "precio" ? "Guardando..." : "Guardar precio"}
         </button>
@@ -144,6 +147,7 @@ export default function UnitStatusPanel({ token, initialUnit }) {
             {feedback.message}
           </p>
         ) : null}
+      </div>
       </div>
     </main>
   );

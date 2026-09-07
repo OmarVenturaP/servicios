@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { effectiveAvailableCondition, effectiveOccupiedCondition } from "@/db/availability";
@@ -16,7 +17,7 @@ const occupiedUnits = sql`sum(case when ${effectiveOccupation} then 1 else 0 end
 const minimumAvailablePrice = sql`min(case when ${effectiveAvailability} then ${datUnidades.precioBase} else null end)`;
 const latestAvailabilityUpdate = sql`max(case when ${effectiveAvailability} then ${datUnidades.estadoActualizadoAt} else null end)`;
 
-export async function getPublicServicesByCity(citySlug) {
+export const getPublicServicesByCity = cache(async function getPublicServicesByCity(citySlug) {
   const db = getDb();
 
   const [city] = await db
@@ -91,4 +92,4 @@ export async function getPublicServicesByCity(citySlug) {
       ),
     },
   };
-}
+});

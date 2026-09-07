@@ -1,4 +1,4 @@
-# Servicios {ciudad}
+# Servicios
 ## Especificación funcional y técnica — MVP v1.0
 
 > Estado: Aprobado para implementación inicial  
@@ -11,13 +11,16 @@
 # 1. Propósito del documento
 
 Este documento define el alcance funcional y técnico del MVP de la
-plataforma temporalmente denominada:
+plataforma denominada:
 
-**Servicios {ciudad}**
+**Servicios**
 
 Para la primera implementación:
 
-**Servicios Tonalá**
+**Servicios en Tonalá**
+
+La ciudad es contexto del producto y no forma parte de la marca ni del
+logotipo.
 
 Este documento debe considerarse la fuente principal de verdad para
 la implementación.
@@ -994,11 +997,12 @@ Dirección inicial:
 - títulos con peso alto;
 - textos compactos y legibles.
 
-Primera opción:
+Tipografía oficial:
 
-**Inter**
+**Plus Jakarta Sans**
 
-La tipografía definitiva puede cambiar durante branding.
+Utilizar Semibold para títulos y wordmark cuando se reproduzca mediante
+texto, y Regular/Medium para cuerpo, navegación y etiquetas.
 
 No acoplar la arquitectura a una fuente específica.
 
@@ -1030,20 +1034,17 @@ No mezclar múltiples estilos de iconografía sin necesidad.
 
 # 42. Colores
 
-El branding definitivo está pendiente.
+La identidad definitiva utiliza:
 
-Dirección provisional:
+- verde esmeralda `#34D399`;
+- teal `#2ECF9D`;
+- azul brillante `#2563EB`;
+- azul marino `#0B172A`;
+- gradiente principal de 135 grados desde verde esmeralda hacia azul
+  brillante.
 
-- fondo blanco / gris muy claro;
-- azul oscuro para títulos;
-- verde para disponibilidad;
-- verde para acciones de WhatsApp;
-- colores adicionales únicamente como acentos.
-
-Existe interés futuro en utilizar una paleta inspirada en las letras
-monumentales multicolor de localidades mexicanas/Tonalá.
-
-No convertir todavía esa idea en branding definitivo.
+Mantener los colores de marca separados de los colores semánticos de
+disponibilidad, advertencia, error, éxito y canales de contacto.
 
 ---
 
@@ -1053,7 +1054,7 @@ La experiencia debe ser dinámica por ciudad.
 
 Ejemplo para Tonalá:
 
-    Servicios Tonalá
+    Servicios en Tonalá
 
     Gente local para tu día a día.
 
@@ -2062,6 +2063,22 @@ Sobre la ruta `/[ciudad]` ya existente:
 - generación y rotación de accesos privados de unidad;
 - copia y preparación de enlaces para compartir por WhatsApp.
 
+## Fase técnica 6.2 — Navegación y ordenamiento
+
+- búsqueda sencilla de tipos de servicio;
+- categorías futuras identificadas como Próximamente;
+- contador de disponibilidad efectiva;
+- orden Recomendados y Menor precio.
+
+## Fase técnica 6.3 — Identidad, dominio y base legal
+
+- identidad oficial Servicios;
+- assets de marca y Plus Jakarta Sans;
+- dominio canónico `https://somosservicios.com`;
+- metadata social, robots, sitemap y manifest;
+- Términos y Condiciones;
+- Aviso de Privacidad.
+
 ## Fase técnica 7 — QA
 
 - mobile;
@@ -2489,7 +2506,7 @@ valor.
 
 La landing puede contener:
 
-    Servicios Tonalá
+    Servicios en Tonalá
 
     ¿Qué necesitas?
 
@@ -2826,7 +2843,7 @@ funcional y /[ciudad] evolucione hacia una verdadera home/directorio.
 
 Ejemplo futuro:
 
-    Servicios Tonalá
+    Servicios en Tonalá
 
     Mandados disponibles                  Ver todos →
     [ proveedor ]
