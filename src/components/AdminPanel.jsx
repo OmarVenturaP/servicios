@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Check, CheckCircle2, ChevronLeft, Copy, ImageIcon, KeyRound, Plus, Search, Settings2, Trash2, Upload, X, XCircle } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Check, CheckCircle2, ChevronLeft, Copy, ImageIcon, KeyRound, Plus, Search, Settings2, Trash2, Upload, X, XCircle } from "lucide-react";
 import BrandMark from "./BrandMark";
 import Header from "./Header";
 
@@ -322,6 +323,7 @@ export default function AdminPanel() {
     <AdminShell title="Servicios" subtitle="Administración operativa" feedback={feedback}>
       <div className="relative"><Search className="absolute left-3 top-3.5 text-slate-400" size={19} /><input aria-label="Buscar servicio" className={`${inputClass} mt-0 pl-10`} placeholder="Buscar servicio" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
       <button type="button" onClick={() => { setShowCreate(true); setFeedback(null); }} className={`${primaryButton} mt-3`}><Plus size={19} /> Nuevo proveedor</button>
+      <Link href="/admin/metricas" className="brand-soft-surface mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-extrabold text-[var(--brand-blue)]"><BarChart3 size={18} /> Ver métricas</Link>
       <div className="mt-4 grid gap-3">{filteredServices.map((service) => { const status = serviceStatus(service); return <article key={service.id} className={cardClass}><div className="flex items-center gap-3"><AdminServiceThumbnail key={service.logoUrl || `fallback-${service.id}`} service={service} /><div className="min-w-0 flex-1"><p className="text-xs font-bold uppercase tracking-wide text-[var(--brand-blue)]">{service.cityName}</p><div className="mt-1 flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ring-2 ring-white ${status.color}`} role="img" aria-label={`Estado: ${status.label}`} title={status.label} /><h2 className="truncate text-lg font-black text-slate-950">{service.name}</h2></div><p className="mt-1 text-sm text-slate-500">{service.units.length} {service.units.length === 1 ? "unidad" : "unidades"}</p></div></div><button type="button" onClick={() => openService(service)} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-navy)] text-sm font-extrabold text-white"><Settings2 size={17} /> Administrar</button></article>; })}</div>
     </AdminShell>
   );

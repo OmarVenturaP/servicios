@@ -2079,6 +2079,17 @@ Sobre la ruta `/[ciudad]` ya existente:
 - Términos y Condiciones;
 - Aviso de Privacidad.
 
+## Fase técnica 6.4 — Panel administrativo de métricas
+
+- `/admin/metricas` protegido mediante `ADMIN_ACCESS_KEY`;
+- periodos Hoy, 7 días y 30 días;
+- visitas y visitantes anónimos únicos aproximados;
+- contactos iniciados, WhatsApp, llamadas y tasa de contacto;
+- agregados por servicio, unidad y ciudad;
+- evolución diaria;
+- sin exponer identificadores de sesión ni datos de contacto;
+- sin borrado de métricas desde la interfaz.
+
 ## Fase técnica 7 — QA
 
 - mobile;

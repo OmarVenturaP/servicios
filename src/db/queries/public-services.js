@@ -64,7 +64,6 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
     .orderBy(
       desc(sql`(${availableUnits}) > 0`),
       desc(availableUnits),
-      desc(latestAvailabilityUpdate),
       asc(sql`rand()`),
     );
 
