@@ -27,6 +27,7 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
       slug: catCiudades.slug,
       state: catCiudades.estado,
       country: catCiudades.pais,
+      updatedAt: catCiudades.updatedAt,
     })
     .from(catCiudades)
     .where(and(eq(catCiudades.slug, citySlug), eq(catCiudades.activo, true)))
@@ -44,6 +45,7 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
       description: datServicios.descripcion,
       coverage: datServicios.coberturaTexto,
       logoUrl: datServicios.logoUrl,
+      source: datServicios.fuente,
       availableUnits,
       occupiedUnits,
       priceFrom: minimumAvailablePrice,
@@ -60,6 +62,7 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
       datServicios.descripcion,
       datServicios.coberturaTexto,
       datServicios.logoUrl,
+      datServicios.fuente,
     )
     .orderBy(
       desc(sql`(${availableUnits}) > 0`),

@@ -2,21 +2,56 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Home, Menu, Search, X } from "lucide-react";
 import { pilotWhatsappUrl, siteConfig } from "@/config/site";
 
 export default function BottomNavigation() {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef(null);
+  const triggerRef = useRef(null);
   const pathname = usePathname();
 
   const isCityPage = pathname && pathname.split("/").length === 2 && !["admin", "aviso-privacidad", "terminos-condiciones", "preguntas-frecuentes", "u"].includes(pathname.split("/")[1]);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    const trigger = triggerRef.current;
+    const focusable = dialog?.querySelectorAll('a[href], button:not([disabled])');
+    focusable?.[0]?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      trigger?.focus();
+    };
+  }, [open]);
 
   return (
     <>
       {open ? (
         <div className="fixed inset-0 z-30 bg-slate-950/25" onClick={() => setOpen(false)}>
           <section
+            id="more-menu-dialog"
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="more-menu-title"
@@ -76,7 +111,7 @@ export default function BottomNavigation() {
               <Search aria-hidden="true" size={20} /> Buscar
             </Link>
           )}
-          <button type="button" onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="more-menu-title" className={`flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold ${open ? "text-[var(--brand-blue)]" : "text-slate-500"}`}>
+          <button ref={triggerRef} type="button" onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="more-menu-dialog" className={`flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold ${open ? "text-[var(--brand-blue)]" : "text-slate-500"}`}>
             <Menu aria-hidden="true" size={20} /> Más
           </button>
         </div>

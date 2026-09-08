@@ -11,7 +11,9 @@ export default function manifest() {
     theme_color: "#0B172A",
     lang: "es-MX",
     icons: [
-      { src: "/brand/app-icon.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/brand/pwa-icon-192-v3.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/brand/pwa-icon-512-v3.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/brand/pwa-maskable-512-v3.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

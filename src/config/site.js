@@ -1,6 +1,7 @@
 export const siteConfig = {
   name: "Servicios",
-  url: "https://www.somosservicios.com",
+  seoName: "Somos Servicios",
+  url: "https://somosservicios.com",
   tagline: "Gente local para tu día a día",
   brandMessage: "Conecta tu día a día",
   description: "Encuentra servicios locales disponibles, compara precios desde y contacta directamente con prestadores en tu ciudad.",

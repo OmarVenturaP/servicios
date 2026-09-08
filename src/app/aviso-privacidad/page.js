@@ -17,7 +17,7 @@ export default function PrivacyPage() {
   return (
     <LegalPageLayout title="Aviso de Privacidad">
       <h2>1. Responsable</h2>
-      <p>Servicios opera la plataforma disponible en <a href={siteConfig.url}>{siteConfig.url}</a>. El producto fue desarrollado por <a href={siteConfig.creator.url} target="_blank" rel="noreferrer">{siteConfig.creator.name}</a>. El representante legal de la plataforma todavía no ha sido definido y su identificación se incorporará cuando corresponda, sin atribuir una razón social inexistente.</p>
+      <p><strong>Servicios</strong> opera la plataforma disponible en <a href={siteConfig.url}>{siteConfig.url}</a>. El producto fue desarrollado por <a href={siteConfig.creator.url} target="_blank" rel="noreferrer">{siteConfig.creator.name}</a>. El representante legal de la plataforma todavía no ha sido definido y su identificación se incorporará cuando corresponda, sin atribuir una razón social inexistente.</p>
 
       <h2>2. Datos que podemos tratar</h2>
       <p>De los prestadores pueden tratarse el nombre del servicio, teléfono, WhatsApp, descripción, cobertura, precio base, disponibilidad, logotipo y datos operativos de sus unidades.</p>
@@ -30,16 +30,16 @@ export default function PrivacyPage() {
       <p>La información puede utilizarse para mostrar servicios disponibles, facilitar el contacto, operar la disponibilidad, administrar unidades, mostrar precios, mejorar el funcionamiento del producto, generar estadísticas agregadas, prevenir abuso y brindar soporte al piloto.</p>
 
       <h2>5. Comunicación con terceros</h2>
-      <p>Cuando eliges WhatsApp o llamada, la comunicación ocurre mediante proveedores externos. Servicios no controla sus políticas ni el tratamiento que esas plataformas realizan conforme a sus propios términos.</p>
+      <p>Cuando eliges WhatsApp o llamada, la comunicación ocurre mediante proveedores externos. <strong>Servicios</strong> no controla sus políticas ni el tratamiento que esas plataformas realizan conforme a sus propios términos.</p>
 
       <h2>6. Cookies</h2>
-      <p>Servicios utiliza una cookie para conservar un identificador aleatorio y anónimo de sesión. Este identificador permite relacionar eventos operativos básicos, como una visita y un contacto, y no representa por sí mismo una identidad real. No se utiliza fingerprinting avanzado para este fin.</p>
+      <p><strong>Servicios</strong> utiliza una cookie para conservar un identificador aleatorio y anónimo de sesión. Este identificador permite relacionar eventos operativos básicos, como una visita y un contacto, y no representa por sí mismo una identidad real. No se utiliza fingerprinting avanzado para este fin.</p>
 
       <h2>7. Conservación</h2>
       <p>La información se conservará durante el tiempo necesario para las finalidades operativas, legales o de seguridad aplicables. Los periodos concretos podrán definirse conforme evolucione la operación y sus obligaciones.</p>
 
       <h2>8. Seguridad</h2>
-      <p>Se aplican medidas razonables para proteger la información. Ningún sistema puede garantizar seguridad absoluta, por lo que Servicios no realiza esa promesa.</p>
+      <p>Se aplican medidas razonables para proteger la información. Ningún sistema puede garantizar seguridad absoluta, por lo que <strong>Servicios</strong> no realiza esa promesa.</p>
 
       <h2>9. Derechos del titular</h2>
       <p>Para ejercer derechos relacionados con tus datos personales conforme a la legislación mexicana aplicable, escribe a <a href={`mailto:${siteConfig.privacyEmail}`}>{siteConfig.privacyEmail}</a>. Al recibir una solicitud se indicará la información razonablemente necesaria para identificar el dato y atender el caso.</p>

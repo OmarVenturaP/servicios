@@ -1,60 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Bike, CarFront, Check, Droplet, Ellipsis, Package, PlugZap, Search, Snowflake, Sparkles, Wrench, X } from "lucide-react";
+import { Bike, Check, Droplet, Ellipsis, Package, PlugZap, Search, Snowflake, Sparkles, Wrench, X } from "lucide-react";
 import ServiceList from "./ServiceList";
+import { serviceCategories } from "@/config/service-categories";
 
-const categories = [
-  {
-    key: "mandados",
-    name: "Mandados",
-    keywords: ["mandado", "mandados", "motomandado", "motomandados", "entrega", "entregas", "compra", "compras"],
-    icon: Bike,
-    active: true,
-  },
-  {
-    key: "aire-acondicionado",
-    name: "A/C",
-    keywords: ["a/c", "ac", "aire", "aire acondicionado", "clima", "climas"],
-    icon: Snowflake,
-  },
-  {
-    key: "mecanicos",
-    name: "Mecánicos",
-    keywords: ["mecanico", "mecanicos", "mecánica", "taller", "automotriz"],
-    icon: Wrench,
-  },
-  {
-    key: "electricistas",
-    name: "Electricistas",
-    keywords: ["electricista", "electricistas", "electricidad", "eléctrico", "electrico"],
-    icon: PlugZap,
-  },
-  {
-    key: "Plomería",
-    name: "Plomería",
-    keywords: ["plomeros", "plomería", "cañería", "fugas"],
-    icon: Droplet
-  },
-  {
-    key: "fletes",
-    name: "Fletes",
-    keywords: ["flete", "fletes", "carga", "mudanza", "mudanzas"],
-    icon: Package,
-  },
-  {
-    key: "limpieza",
-    name: "Limpieza",
-    keywords: ["limpieza", "limpiezas", "limpiador", "limpiadores"],
-    icon: Sparkles,
-  },
-  {
-    key: "mas-servicios",
-    name: "Más",
-    keywords: ["mas", "más", "otros", "otro", "proximamente", "próximamente"],
-    icon: Ellipsis,
-  },
-];
+const categoryIcons = {
+  bike: Bike,
+  droplet: Droplet,
+  ellipsis: Ellipsis,
+  package: Package,
+  plug: PlugZap,
+  snowflake: Snowflake,
+  sparkles: Sparkles,
+  wrench: Wrench,
+};
 
 function normalize(value) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("es-MX");
@@ -81,11 +41,11 @@ function sortByPrice(services) {
     .map(({ service }) => service);
 }
 
-export default function LandingExperience({ citySlug, services, totals }) {
+export default function LandingExperience({ citySlug, cityName, services, totals }) {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("recommended");
   const normalizedQuery = normalize(query);
-  const visibleCategories = useMemo(() => categories.filter((category) => (
+  const visibleCategories = useMemo(() => serviceCategories.filter((category) => (
     !normalizedQuery || category.keywords.some((keyword) => keyword.includes(normalizedQuery) || normalizedQuery.includes(keyword))
   )), [normalizedQuery]);
   const showsMandados = visibleCategories.some((category) => category.active);
@@ -116,7 +76,9 @@ export default function LandingExperience({ citySlug, services, totals }) {
 
         {visibleCategories.length ? (
           <div className="mt-3 flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Categorías de servicio">
-            {visibleCategories.map(({ key, name, icon: Icon, active }) => active ? (
+            {visibleCategories.map(({ key, name, icon, active }) => {
+              const Icon = categoryIcons[icon];
+              return active ? (
               <a key={key} href="#servicios" aria-label={`${name}, disponible`} className="brand-soft-surface w-[7.5rem] shrink-0 snap-start rounded-xl border p-2.5 text-[var(--brand-blue)] shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-blue)]">
                 <div className="flex items-start justify-between gap-1"><Icon aria-hidden="true" size={21} /><span className="rounded-full bg-white px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-wide text-[var(--brand-blue)]">Disponible</span></div>
                 <strong className="mt-1.5 block truncate text-xs text-[var(--brand-navy)]">{name}</strong>
@@ -126,7 +88,8 @@ export default function LandingExperience({ citySlug, services, totals }) {
                 <div className="flex items-start justify-between gap-1"><Icon aria-hidden="true" size={21} /><span className="rounded-full bg-white px-1.5 py-0.5 text-[0.45rem] font-black uppercase tracking-wide text-slate-500">Próximamente</span></div>
                 <strong className="mt-1.5 block truncate text-xs text-slate-700">{name}</strong>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center">
@@ -146,7 +109,7 @@ export default function LandingExperience({ citySlug, services, totals }) {
       {
         showsMandados ? (
           <section id="servicios" className="mt-5 scroll-mt-4" aria-labelledby="services-title" >
-            <h2 id="services-title" className="text-[0.92rem] font-black text-slate-950">Mandaditos disponibles ahora</h2>
+            <h2 id="services-title" className="text-[0.92rem] font-black text-slate-950">Mandaditos y motomandados disponibles en {cityName}</h2>
             <p className="mt-1 text-xs font-semibold text-slate-500">{availabilityLabel}</p>
             <div className="mt-3 grid grid-cols-2 rounded-xl bg-slate-100 p-1" role="group" aria-label="Ordenar servicios">
               {[

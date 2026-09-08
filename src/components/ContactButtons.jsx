@@ -7,7 +7,7 @@ const channels = {
   whatsapp: {
     label: "WhatsApp",
     Icon: MessageCircle,
-    className: "bg-emerald-500 hover:bg-emerald-600",
+    className: "bg-emerald-700 hover:bg-emerald-800",
   },
   llamada: {
     label: "Llamar",
@@ -62,7 +62,7 @@ export default function ContactButtons({ citySlug, serviceSlug, priceShown, disa
             type="button"
             disabled={disabled || pendingChannel !== null}
             onClick={() => startContact(channel)}
-            className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-extrabold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-300 ${className}`}
+            className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-extrabold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-300 ${className}`}
           >
             <Icon aria-hidden="true" size={16} strokeWidth={2.3} />
             {pendingChannel === channel ? "Abriendo..." : label}

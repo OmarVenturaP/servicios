@@ -13,7 +13,7 @@ export default function SiteFooter({ compact = false }) {
           ))}
         </nav>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-500">
-          <span>© {new Date().getFullYear()} {siteConfig.name}</span>
+          <span>© {new Date().getFullYear()} <strong>{siteConfig.name}</strong></span>
           <a href={siteConfig.creator.url} target="_blank" rel="noreferrer" className="font-semibold hover:text-[var(--brand-blue)]">Creado por SERVITEC</a>
         </div>
       </div>
