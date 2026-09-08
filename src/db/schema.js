@@ -7,6 +7,8 @@ import {
   int,
   mysqlEnum,
   mysqlTable,
+  time,
+  tinyint,
   text,
   timestamp,
   uniqueIndex,
@@ -21,6 +23,7 @@ export const catCiudades = mysqlTable(
     slug: varchar("slug", { length: 120 }).notNull(),
     estado: varchar("estado", { length: 120 }).notNull(),
     pais: varchar("pais", { length: 120 }).notNull(),
+    zonaHoraria: varchar("zona_horaria", { length: 80 }).default("America/Mexico_City").notNull(),
     activo: boolean("activo").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
@@ -99,6 +102,9 @@ export const datUnidades = mysqlTable(
       .references(() => catEstadosUnidad.id, { onDelete: "restrict", onUpdate: "cascade" }),
     estadoActualizadoAt: timestamp("estado_actualizado_at").defaultNow().notNull(),
     estadoHasta: timestamp("estado_hasta"),
+    modoDisponibilidad: mysqlEnum("modo_disponibilidad", ["manual", "programado"]).default("manual").notNull(),
+    excepcionEstado: mysqlEnum("excepcion_estado", ["disponible", "ocupado", "no_disponible"]),
+    excepcionHasta: timestamp("excepcion_hasta"),
     tokenHash: char("token_hash", { length: 64 }),
     activo: boolean("activo").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -112,6 +118,24 @@ export const datUnidades = mysqlTable(
       table.activo,
       table.estadoHasta,
     ),
+  ],
+);
+
+export const datHorariosUnidad = mysqlTable(
+  "dat_horarios_unidad",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    unidadId: int("unidad_id").notNull().references(() => datUnidades.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    diaSemana: tinyint("dia_semana").notNull(),
+    bloque: tinyint("bloque").notNull(),
+    horaInicio: time("hora_inicio").notNull(),
+    horaFin: time("hora_fin").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_horario_unidad_dia_bloque").on(table.unidadId, table.diaSemana, table.bloque),
+    index("idx_horario_unidad_dia").on(table.unidadId, table.diaSemana),
   ],
 );
 
@@ -217,6 +241,11 @@ export const datUnidadesRelations = relations(datUnidades, ({ one, many }) => ({
   }),
   historico: many(logEstadosUnidad),
   contactos: many(logContactos),
+  horarios: many(datHorariosUnidad),
+}));
+
+export const datHorariosUnidadRelations = relations(datHorariosUnidad, ({ one }) => ({
+  unidad: one(datUnidades, { fields: [datHorariosUnidad.unidadId], references: [datUnidades.id] }),
 }));
 
 export const logEstadosUnidadRelations = relations(logEstadosUnidad, ({ one }) => ({

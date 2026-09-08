@@ -1,21 +1,13 @@
 import { cache } from "react";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { effectiveAvailableCondition, effectiveOccupiedCondition } from "@/db/availability";
+import { effectiveAvailableCondition, effectiveOccupiedCondition, getTimeZoneOffsetMinutes } from "@/db/availability";
 import {
   catCiudades,
   catEstadosUnidad,
   datServicios,
   datUnidades,
 } from "@/db/schema";
-
-const effectiveAvailability = effectiveAvailableCondition();
-const effectiveOccupation = effectiveOccupiedCondition();
-
-const availableUnits = sql`sum(case when ${effectiveAvailability} then 1 else 0 end)`;
-const occupiedUnits = sql`sum(case when ${effectiveOccupation} then 1 else 0 end)`;
-const minimumAvailablePrice = sql`min(case when ${effectiveAvailability} then ${datUnidades.precioBase} else null end)`;
-const latestAvailabilityUpdate = sql`max(case when ${effectiveAvailability} then ${datUnidades.estadoActualizadoAt} else null end)`;
 
 export const getPublicServicesByCity = cache(async function getPublicServicesByCity(citySlug) {
   const db = getDb();
@@ -28,6 +20,7 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
       state: catCiudades.estado,
       country: catCiudades.pais,
       updatedAt: catCiudades.updatedAt,
+      timeZone: catCiudades.zonaHoraria,
     })
     .from(catCiudades)
     .where(and(eq(catCiudades.slug, citySlug), eq(catCiudades.activo, true)))
@@ -36,6 +29,13 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
   if (!city) {
     return null;
   }
+
+  const effectiveAvailability = effectiveAvailableCondition({ timeZoneOffsetMinutes: getTimeZoneOffsetMinutes(city.timeZone) });
+  const effectiveOccupation = effectiveOccupiedCondition();
+  const availableUnits = sql`sum(case when ${effectiveAvailability} then 1 else 0 end)`;
+  const occupiedUnits = sql`sum(case when ${effectiveOccupation} then 1 else 0 end)`;
+  const minimumAvailablePrice = sql`min(case when ${effectiveAvailability} then ${datUnidades.precioBase} else null end)`;
+  const latestAvailabilityUpdate = sql`max(case when ${effectiveAvailability} then ${datUnidades.estadoActualizadoAt} else null end)`;
 
   const rows = await db
     .select({

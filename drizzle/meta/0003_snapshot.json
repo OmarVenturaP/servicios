@@ -1,0 +1,1038 @@
+{
+  "version": "5",
+  "dialect": "mysql",
+  "id": "13d1bc45-5d63-4c8c-9d41-2f7ceccdaa74",
+  "prevId": "dd6ae5b9-afad-4542-a6e0-18caa5ae0087",
+  "tables": {
+    "cat_ciudades": {
+      "name": "cat_ciudades",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pais": {
+          "name": "pais",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "zona_horaria": {
+          "name": "zona_horaria",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'America/Mexico_City'"
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "uq_cat_ciudades_slug": {
+          "name": "uq_cat_ciudades_slug",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "cat_ciudades_id": {
+          "name": "cat_ciudades_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "cat_estados_unidad": {
+      "name": "cat_estados_unidad",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "clave": {
+          "name": "clave",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "uq_cat_estados_unidad_clave": {
+          "name": "uq_cat_estados_unidad_clave",
+          "columns": [
+            "clave"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "cat_estados_unidad_id": {
+          "name": "cat_estados_unidad_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "cat_modos_contacto": {
+      "name": "cat_modos_contacto",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "clave": {
+          "name": "clave",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "uq_cat_modos_contacto_clave": {
+          "name": "uq_cat_modos_contacto_clave",
+          "columns": [
+            "clave"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "cat_modos_contacto_id": {
+          "name": "cat_modos_contacto_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "dat_horarios_unidad": {
+      "name": "dat_horarios_unidad",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "unidad_id": {
+          "name": "unidad_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "dia_semana": {
+          "name": "dia_semana",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "bloque": {
+          "name": "bloque",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hora_inicio": {
+          "name": "hora_inicio",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hora_fin": {
+          "name": "hora_fin",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "uq_horario_unidad_dia_bloque": {
+          "name": "uq_horario_unidad_dia_bloque",
+          "columns": [
+            "unidad_id",
+            "dia_semana",
+            "bloque"
+          ],
+          "isUnique": true
+        },
+        "idx_horario_unidad_dia": {
+          "name": "idx_horario_unidad_dia",
+          "columns": [
+            "unidad_id",
+            "dia_semana"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "dat_horarios_unidad_unidad_id_dat_unidades_id_fk": {
+          "name": "dat_horarios_unidad_unidad_id_dat_unidades_id_fk",
+          "tableFrom": "dat_horarios_unidad",
+          "tableTo": "dat_unidades",
+          "columnsFrom": [
+            "unidad_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "dat_horarios_unidad_id": {
+          "name": "dat_horarios_unidad_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "dat_servicios": {
+      "name": "dat_servicios",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "ciudad_id": {
+          "name": "ciudad_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "modo_contacto_id": {
+          "name": "modo_contacto_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "whatsapp": {
+          "name": "whatsapp",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cobertura_texto": {
+          "name": "cobertura_texto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "visible": {
+          "name": "visible",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "participa_piloto": {
+          "name": "participa_piloto",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "fuente": {
+          "name": "fuente",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "uq_dat_servicios_ciudad_slug": {
+          "name": "uq_dat_servicios_ciudad_slug",
+          "columns": [
+            "ciudad_id",
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "idx_dat_servicios_modo_contacto": {
+          "name": "idx_dat_servicios_modo_contacto",
+          "columns": [
+            "modo_contacto_id"
+          ],
+          "isUnique": false
+        },
+        "idx_dat_servicios_publicos": {
+          "name": "idx_dat_servicios_publicos",
+          "columns": [
+            "ciudad_id",
+            "visible"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "dat_servicios_ciudad_id_cat_ciudades_id_fk": {
+          "name": "dat_servicios_ciudad_id_cat_ciudades_id_fk",
+          "tableFrom": "dat_servicios",
+          "tableTo": "cat_ciudades",
+          "columnsFrom": [
+            "ciudad_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "dat_servicios_modo_contacto_id_cat_modos_contacto_id_fk": {
+          "name": "dat_servicios_modo_contacto_id_cat_modos_contacto_id_fk",
+          "tableFrom": "dat_servicios",
+          "tableTo": "cat_modos_contacto",
+          "columnsFrom": [
+            "modo_contacto_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "dat_servicios_id": {
+          "name": "dat_servicios_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "dat_unidades": {
+      "name": "dat_unidades",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "servicio_id": {
+          "name": "servicio_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "whatsapp": {
+          "name": "whatsapp",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "precio_base": {
+          "name": "precio_base",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_id": {
+          "name": "estado_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_actualizado_at": {
+          "name": "estado_actualizado_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "estado_hasta": {
+          "name": "estado_hasta",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "modo_disponibilidad": {
+          "name": "modo_disponibilidad",
+          "type": "enum('manual','programado')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'manual'"
+        },
+        "excepcion_estado": {
+          "name": "excepcion_estado",
+          "type": "enum('disponible','ocupado','no_disponible')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "excepcion_hasta": {
+          "name": "excepcion_hasta",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "uq_dat_unidades_token_hash": {
+          "name": "uq_dat_unidades_token_hash",
+          "columns": [
+            "token_hash"
+          ],
+          "isUnique": true
+        },
+        "idx_dat_unidades_servicio": {
+          "name": "idx_dat_unidades_servicio",
+          "columns": [
+            "servicio_id"
+          ],
+          "isUnique": false
+        },
+        "idx_dat_unidades_disponibilidad": {
+          "name": "idx_dat_unidades_disponibilidad",
+          "columns": [
+            "estado_id",
+            "activo",
+            "estado_hasta"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "dat_unidades_servicio_id_dat_servicios_id_fk": {
+          "name": "dat_unidades_servicio_id_dat_servicios_id_fk",
+          "tableFrom": "dat_unidades",
+          "tableTo": "dat_servicios",
+          "columnsFrom": [
+            "servicio_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "dat_unidades_estado_id_cat_estados_unidad_id_fk": {
+          "name": "dat_unidades_estado_id_cat_estados_unidad_id_fk",
+          "tableFrom": "dat_unidades",
+          "tableTo": "cat_estados_unidad",
+          "columnsFrom": [
+            "estado_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "dat_unidades_id": {
+          "name": "dat_unidades_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "log_contactos": {
+      "name": "log_contactos",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "servicio_id": {
+          "name": "servicio_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unidad_id": {
+          "name": "unidad_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ciudad_id": {
+          "name": "ciudad_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "canal": {
+          "name": "canal",
+          "type": "enum('whatsapp','llamada')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "precio_mostrado": {
+          "name": "precio_mostrado",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "idx_log_contactos_servicio_fecha": {
+          "name": "idx_log_contactos_servicio_fecha",
+          "columns": [
+            "servicio_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "idx_log_contactos_unidad": {
+          "name": "idx_log_contactos_unidad",
+          "columns": [
+            "unidad_id"
+          ],
+          "isUnique": false
+        },
+        "idx_log_contactos_ciudad_fecha": {
+          "name": "idx_log_contactos_ciudad_fecha",
+          "columns": [
+            "ciudad_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "idx_log_contactos_session": {
+          "name": "idx_log_contactos_session",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "log_contactos_servicio_id_dat_servicios_id_fk": {
+          "name": "log_contactos_servicio_id_dat_servicios_id_fk",
+          "tableFrom": "log_contactos",
+          "tableTo": "dat_servicios",
+          "columnsFrom": [
+            "servicio_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "log_contactos_unidad_id_dat_unidades_id_fk": {
+          "name": "log_contactos_unidad_id_dat_unidades_id_fk",
+          "tableFrom": "log_contactos",
+          "tableTo": "dat_unidades",
+          "columnsFrom": [
+            "unidad_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "log_contactos_ciudad_id_cat_ciudades_id_fk": {
+          "name": "log_contactos_ciudad_id_cat_ciudades_id_fk",
+          "tableFrom": "log_contactos",
+          "tableTo": "cat_ciudades",
+          "columnsFrom": [
+            "ciudad_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "log_contactos_id": {
+          "name": "log_contactos_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "log_estados_unidad": {
+      "name": "log_estados_unidad",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "unidad_id": {
+          "name": "unidad_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_id": {
+          "name": "estado_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado_hasta": {
+          "name": "estado_hasta",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "idx_log_estados_unidad_unidad_fecha": {
+          "name": "idx_log_estados_unidad_unidad_fecha",
+          "columns": [
+            "unidad_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "idx_log_estados_unidad_estado": {
+          "name": "idx_log_estados_unidad_estado",
+          "columns": [
+            "estado_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "log_estados_unidad_unidad_id_dat_unidades_id_fk": {
+          "name": "log_estados_unidad_unidad_id_dat_unidades_id_fk",
+          "tableFrom": "log_estados_unidad",
+          "tableTo": "dat_unidades",
+          "columnsFrom": [
+            "unidad_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "log_estados_unidad_estado_id_cat_estados_unidad_id_fk": {
+          "name": "log_estados_unidad_estado_id_cat_estados_unidad_id_fk",
+          "tableFrom": "log_estados_unidad",
+          "tableTo": "cat_estados_unidad",
+          "columnsFrom": [
+            "estado_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "log_estados_unidad_id": {
+          "name": "log_estados_unidad_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "log_visitas": {
+      "name": "log_visitas",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "ciudad_id": {
+          "name": "ciudad_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "origen": {
+          "name": "origen",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "idx_log_visitas_ciudad_fecha": {
+          "name": "idx_log_visitas_ciudad_fecha",
+          "columns": [
+            "ciudad_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "idx_log_visitas_session": {
+          "name": "idx_log_visitas_session",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "log_visitas_ciudad_id_cat_ciudades_id_fk": {
+          "name": "log_visitas_ciudad_id_cat_ciudades_id_fk",
+          "tableFrom": "log_visitas",
+          "tableTo": "cat_ciudades",
+          "columnsFrom": [
+            "ciudad_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "log_visitas_id": {
+          "name": "log_visitas_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

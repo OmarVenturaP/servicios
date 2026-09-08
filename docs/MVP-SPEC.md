@@ -3157,3 +3157,13 @@ La Fase 6.2 se considerará funcionalmente completa cuando:
     esta fase.
 
 30. No se introduzcan funcionalidades fuera del alcance establecido.
+
+---
+
+# 66. Fase 6.5 — Disponibilidad programada por unidad
+
+La disponibilidad programada extiende el estado manual existente sin reemplazarlo. Cada unidad puede operar en modo `manual` (valor predeterminado y compatible con registros existentes) o `programado`, con hasta dos bloques por día, zona horaria IANA de la ciudad y excepciones temporales que prevalecen sobre el horario.
+
+La disponibilidad efectiva compartida por landing, precio y contacto se calcula en este orden: unidad activa, excepción vigente, modo manual o coincidencia con horario semanal. No se utilizarán procesos periódicos para cambiar estados. Los intervalos son `[inicio, fin)` y los horarios que cruzan medianoche quedan fuera de esta primera versión.
+
+La especificación técnica, compatibilidad y limitaciones se documentan en `docs/FASE-6.5-DISPONIBILIDAD.md`.

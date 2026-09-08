@@ -7,6 +7,7 @@ import {
   catEstadosUnidad,
   catModosContacto,
   datServicios,
+  datHorariosUnidad,
   datUnidades,
 } from "@/db/schema";
 import { hashUnitToken } from "@/lib/unit-token";
@@ -78,16 +79,17 @@ function safeUnit(row) {
     priceBase: Number(row.priceBase),
     active: Boolean(row.active),
     storedState: row.state,
-    effectiveState: getEffectiveUnitStatus({ active: row.active, state: row.state, stateUntil: row.stateUntil }),
+    effectiveState: getEffectiveUnitStatus({ active: row.active, state: row.state, stateUntil: row.stateUntil, availabilityMode: row.availabilityMode, overrideState: row.overrideState, overrideUntil: row.overrideUntil, schedule: row.schedule, timeZone: row.timeZone }),
     stateUntil: row.stateUntil ? new Date(row.stateUntil).toISOString() : null,
     hasAccess: Boolean(row.hasAccess),
+    availabilityMode: row.availabilityMode ?? "manual",
   };
 }
 
 export async function getAdminSnapshot() {
   const db = getDb();
-  const [cities, contactModes, services, units] = await Promise.all([
-    db.select({ id: catCiudades.id, name: catCiudades.nombre, slug: catCiudades.slug }).from(catCiudades).where(eq(catCiudades.activo, true)).orderBy(asc(catCiudades.nombre)),
+  const [cities, contactModes, services, units, schedules] = await Promise.all([
+    db.select({ id: catCiudades.id, name: catCiudades.nombre, slug: catCiudades.slug, timeZone: catCiudades.zonaHoraria }).from(catCiudades).where(eq(catCiudades.activo, true)).orderBy(asc(catCiudades.nombre)),
     db.select({ id: catModosContacto.id, key: catModosContacto.clave, name: catModosContacto.nombre }).from(catModosContacto).where(eq(catModosContacto.activo, true)).orderBy(asc(catModosContacto.id)),
     db.select({
       id: datServicios.id,
@@ -114,13 +116,21 @@ export async function getAdminSnapshot() {
       state: catEstadosUnidad.clave,
       stateUntil: datUnidades.estadoHasta,
       hasAccess: datUnidades.tokenHash,
-    }).from(datUnidades).innerJoin(catEstadosUnidad, eq(catEstadosUnidad.id, datUnidades.estadoId)).orderBy(asc(datUnidades.id)),
+      availabilityMode: datUnidades.modoDisponibilidad,
+      overrideState: datUnidades.excepcionEstado,
+      overrideUntil: datUnidades.excepcionHasta,
+      timeZone: catCiudades.zonaHoraria,
+    }).from(datUnidades).innerJoin(datServicios, eq(datServicios.id, datUnidades.servicioId)).innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId)).innerJoin(catEstadosUnidad, eq(catEstadosUnidad.id, datUnidades.estadoId)).orderBy(asc(datUnidades.id)),
+    db.select({ unitId: datHorariosUnidad.unidadId, day: datHorariosUnidad.diaSemana, block: datHorariosUnidad.bloque, start: datHorariosUnidad.horaInicio, end: datHorariosUnidad.horaFin }).from(datHorariosUnidad).orderBy(asc(datHorariosUnidad.unidadId), asc(datHorariosUnidad.diaSemana), asc(datHorariosUnidad.bloque)),
   ]);
+
+  const schedulesByUnit = new Map();
+  for (const item of schedules) schedulesByUnit.set(item.unitId, [...(schedulesByUnit.get(item.unitId) ?? []), item]);
 
   const unitsByService = new Map();
   for (const unit of units) {
     const list = unitsByService.get(unit.serviceId) ?? [];
-    list.push(safeUnit(unit));
+    list.push(safeUnit({ ...unit, schedule: schedulesByUnit.get(unit.id) ?? [] }));
     unitsByService.set(unit.serviceId, list);
   }
 

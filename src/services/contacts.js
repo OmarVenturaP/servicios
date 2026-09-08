@@ -1,6 +1,6 @@
 import { and, asc, count, eq, max } from "drizzle-orm";
 import { getDb } from "@/db";
-import { effectiveAvailableCondition } from "@/db/availability";
+import { effectiveAvailableCondition, getTimeZoneOffsetMinutes } from "@/db/availability";
 import {
   catCiudades,
   catEstadosUnidad,
@@ -11,7 +11,6 @@ import {
 } from "@/db/schema";
 
 const CHANNELS = new Set(["whatsapp", "llamada"]);
-const effectiveAvailability = effectiveAvailableCondition();
 
 export class ContactError extends Error {
   constructor(code, message, status = 400) {
@@ -79,6 +78,7 @@ export async function registerContact({
         contactMode: catModosContacto.clave,
         phone: datServicios.telefono,
         whatsapp: datServicios.whatsapp,
+        timeZone: catCiudades.zonaHoraria,
       })
       .from(datServicios)
       .innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId))
@@ -97,6 +97,8 @@ export async function registerContact({
     if (!service) {
       throw new ContactError("service_not_found", "Servicio o ciudad no encontrados", 404);
     }
+
+    const effectiveAvailability = effectiveAvailableCondition({ timeZoneOffsetMinutes: getTimeZoneOffsetMinutes(service.timeZone) });
 
     const contactCount = count(logContactos.id);
     const lastContactAt = max(logContactos.createdAt);
