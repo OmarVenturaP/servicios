@@ -4,7 +4,7 @@ import { catCiudades, logVisitas } from "@/db/schema";
 
 const VISIT_WINDOW_MINUTES = 30;
 
-export async function registerCityVisit({ citySlug, sessionId, origin }) {
+export async function registerCityVisit({ citySlug, sessionId, attribution, trafficType }) {
   const db = getDb();
   const [city] = await db
     .select({ id: catCiudades.id })
@@ -35,7 +35,12 @@ export async function registerCityVisit({ citySlug, sessionId, origin }) {
   await db.insert(logVisitas).values({
     ciudadId: city.id,
     sessionId,
-    origen: origin,
+    origen: attribution.origin,
+    tipoTrafico: trafficType,
+    utmSource: attribution.utmSource,
+    utmMedium: attribution.utmMedium,
+    utmCampaign: attribution.utmCampaign,
+    utmContent: attribution.utmContent,
   });
 
   return { status: "registered" };

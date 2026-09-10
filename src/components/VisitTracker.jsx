@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { browserAttribution } from "@/lib/analytics-client";
 
 const VISIT_WINDOW_MS = 30 * 60 * 1000;
 
@@ -17,21 +18,13 @@ export default function VisitTracker({ citySlug }) {
       // El servidor también evita duplicados aunque sessionStorage no esté disponible.
     }
 
-    const origin = document.referrer
-      ? (() => {
-          try {
-            return new URL(document.referrer).origin;
-          } catch {
-            return "referencia_desconocida";
-          }
-        })()
-      : "directo";
+    const attribution = browserAttribution();
 
     fetch("/api/visitas", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ citySlug, origin }),
+      body: JSON.stringify({ citySlug, attribution }),
       keepalive: true,
     })
       .then((response) => {

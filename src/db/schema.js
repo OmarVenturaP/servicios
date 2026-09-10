@@ -167,6 +167,11 @@ export const logVisitas = mysqlTable(
       .references(() => catCiudades.id, { onDelete: "restrict", onUpdate: "cascade" }),
     sessionId: varchar("session_id", { length: 36 }).notNull(),
     origen: varchar("origen", { length: 255 }),
+    tipoTrafico: mysqlEnum("tipo_trafico", ["publico", "interno", "sin_clasificar"]),
+    utmSource: varchar("utm_source", { length: 120 }),
+    utmMedium: varchar("utm_medium", { length: 120 }),
+    utmCampaign: varchar("utm_campaign", { length: 160 }),
+    utmContent: varchar("utm_content", { length: 160 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -192,6 +197,13 @@ export const logContactos = mysqlTable(
     sessionId: varchar("session_id", { length: 36 }).notNull(),
     canal: mysqlEnum("canal", ["whatsapp", "llamada"]).notNull(),
     precioMostrado: decimal("precio_mostrado", { precision: 10, scale: 2 }).notNull(),
+    resultPosition: int("result_position"),
+    tipoTrafico: mysqlEnum("tipo_trafico", ["publico", "interno", "sin_clasificar"]),
+    origen: varchar("origen", { length: 255 }),
+    utmSource: varchar("utm_source", { length: 120 }),
+    utmMedium: varchar("utm_medium", { length: 120 }),
+    utmCampaign: varchar("utm_campaign", { length: 160 }),
+    utmContent: varchar("utm_content", { length: 160 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -202,10 +214,36 @@ export const logContactos = mysqlTable(
   ],
 );
 
+export const logEventosAnalitica = mysqlTable(
+  "log_eventos_analitica",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ciudadId: int("ciudad_id").notNull().references(() => catCiudades.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    servicioId: int("servicio_id").references(() => datServicios.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    sessionId: varchar("session_id", { length: 36 }).notNull(),
+    evento: mysqlEnum("evento", ["service_impression", "service_interaction", "search", "filter_change"]).notNull(),
+    resultPosition: int("result_position"),
+    valor: varchar("valor", { length: 160 }),
+    tipoTrafico: mysqlEnum("tipo_trafico", ["publico", "interno", "sin_clasificar"]),
+    origen: varchar("origen", { length: 255 }),
+    utmSource: varchar("utm_source", { length: 120 }),
+    utmMedium: varchar("utm_medium", { length: 120 }),
+    utmCampaign: varchar("utm_campaign", { length: 160 }),
+    utmContent: varchar("utm_content", { length: 160 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_eventos_ciudad_fecha").on(table.ciudadId, table.createdAt),
+    index("idx_eventos_servicio_fecha").on(table.servicioId, table.createdAt),
+    index("idx_eventos_session_evento_fecha").on(table.sessionId, table.evento, table.createdAt),
+  ],
+);
+
 export const catCiudadesRelations = relations(catCiudades, ({ many }) => ({
   servicios: many(datServicios),
   visitas: many(logVisitas),
   contactos: many(logContactos),
+  eventosAnalitica: many(logEventosAnalitica),
 }));
 
 export const catEstadosUnidadRelations = relations(catEstadosUnidad, ({ many }) => ({
@@ -228,6 +266,7 @@ export const datServiciosRelations = relations(datServicios, ({ one, many }) => 
   }),
   unidades: many(datUnidades),
   contactos: many(logContactos),
+  eventosAnalitica: many(logEventosAnalitica),
 }));
 
 export const datUnidadesRelations = relations(datUnidades, ({ one, many }) => ({
@@ -279,4 +318,9 @@ export const logContactosRelations = relations(logContactos, ({ one }) => ({
     fields: [logContactos.ciudadId],
     references: [catCiudades.id],
   }),
+}));
+
+export const logEventosAnaliticaRelations = relations(logEventosAnalitica, ({ one }) => ({
+  ciudad: one(catCiudades, { fields: [logEventosAnalitica.ciudadId], references: [catCiudades.id] }),
+  servicio: one(datServicios, { fields: [logEventosAnalitica.servicioId], references: [datServicios.id] }),
 }));

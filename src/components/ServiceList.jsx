@@ -14,8 +14,8 @@ export default function ServiceList({ citySlug, services }) {
 
   return (
     <div className="space-y-3">
-      {services.map((service) => (
-        <ServiceCard key={service.id} citySlug={citySlug} service={service} />
+      {services.map((service, index) => (
+        <ServiceCard key={service.id} citySlug={citySlug} service={service} resultPosition={index + 1} />
       ))}
     </div>
   );

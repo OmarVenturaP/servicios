@@ -1,8 +1,35 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
 import ContactButtons from "./ContactButtons";
 import ServiceLogo from "./ServiceLogo";
+import { sendAnalyticsEvent } from "@/lib/analytics-client";
 
-export default function ServiceCard({ citySlug, service }) {
+const IMPRESSION_WINDOW_MS = 30 * 60 * 1000;
+
+export default function ServiceCard({ citySlug, service, resultPosition }) {
+  const cardRef = useRef(null);
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element) return;
+    const key = `servicios:impression:${citySlug}:${service.slug}`;
+    try {
+      const previous = Number(sessionStorage.getItem(key));
+      if (previous && Date.now() - previous < IMPRESSION_WINDOW_MS) return;
+    } catch {}
+    let timer;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
+      timer = window.setTimeout(() => {
+        try { sessionStorage.setItem(key, String(Date.now())); } catch {}
+        sendAnalyticsEvent({ citySlug, serviceSlug: service.slug, event: "service_impression", resultPosition });
+        observer.disconnect();
+      }, 600);
+    }, { threshold: [0.5] });
+    observer.observe(element);
+    return () => { window.clearTimeout(timer); observer.disconnect(); };
+  }, [citySlug, resultPosition, service.isAvailable, service.slug]);
   const unitLabel = service.availableUnits === 1 ? "1 unidad" : `${service.availableUnits} unidades`;
   const stateDot = service.publicState === "disponible"
     ? { label: "Disponible", className: "bg-emerald-500" }
@@ -11,7 +38,7 @@ export default function ServiceCard({ citySlug, service }) {
       : { label: "No disponible", className: "bg-red-500" };
 
   return (
-    <article data-nosnippet={service.isDevelopment ? "" : undefined} className={`rounded-xl border p-3 shadow-[0_4px_14px_rgba(15,23,42,0.08)] ${service.isAvailable ? "border-slate-100 bg-white" : "border-slate-200 bg-slate-50"}`}>
+    <article ref={cardRef} data-nosnippet={service.isDevelopment ? "" : undefined} className={`rounded-xl border p-3 shadow-[0_4px_14px_rgba(15,23,42,0.08)] ${service.isAvailable ? "border-slate-100 bg-white" : "border-slate-200 bg-slate-50"}`}>
       <div className="flex items-start gap-3">
         <ServiceLogo key={service.logoUrl || "fallback"} logoUrl={service.logoUrl} serviceName={service.name} available={service.isAvailable} />
         <div className="min-w-0 flex-1 pt-0.5">
@@ -47,6 +74,7 @@ export default function ServiceCard({ citySlug, service }) {
         citySlug={citySlug}
         serviceSlug={service.slug}
         priceShown={service.priceFrom}
+        resultPosition={resultPosition}
         disabled={!service.isAvailable}
       />
     </article>

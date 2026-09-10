@@ -1,6 +1,7 @@
 import { and, asc, count, eq, max } from "drizzle-orm";
 import { getDb } from "@/db";
 import { effectiveAvailableCondition, getTimeZoneOffsetMinutes } from "@/db/availability";
+import { normalizeAttribution, normalizeResultPosition } from "@/lib/analytics-context";
 import {
   catCiudades,
   catEstadosUnidad,
@@ -58,6 +59,9 @@ export async function registerContact({
   channel,
   priceShown,
   sessionId,
+  resultPosition,
+  attribution,
+  trafficType,
 }) {
   if (!CHANNELS.has(channel)) {
     throw new ContactError("invalid_channel", "Canal de contacto inválido");
@@ -172,6 +176,7 @@ export async function registerContact({
       throw new ContactError("invalid_phone", "El servicio no tiene un número válido", 409);
     }
 
+    const context = normalizeAttribution(attribution);
     await tx.insert(logContactos).values({
       servicioId: service.id,
       unidadId: unitId,
@@ -179,6 +184,13 @@ export async function registerContact({
       sessionId,
       canal: channel,
       precioMostrado: serverPrice,
+      resultPosition: normalizeResultPosition(resultPosition),
+      tipoTrafico: trafficType,
+      origen: context.origin,
+      utmSource: context.utmSource,
+      utmMedium: context.utmMedium,
+      utmCampaign: context.utmCampaign,
+      utmContent: context.utmContent,
     });
 
     return {

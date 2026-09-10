@@ -1,16 +1,9 @@
 import { getOrCreateAnonymousSessionId } from "@/lib/session";
 import { registerCityVisit } from "@/services/visits";
+import { normalizeAttribution } from "@/lib/analytics-context";
+import { currentTrafficType } from "@/lib/analytics-server";
 
 export const runtime = "nodejs";
-
-function normalizedOrigin(value) {
-  if (typeof value !== "string") {
-    return "directo";
-  }
-
-  const origin = value.trim();
-  return origin ? origin.slice(0, 255) : "directo";
-}
 
 export async function POST(request) {
   try {
@@ -22,10 +15,12 @@ export async function POST(request) {
     }
 
     const sessionId = await getOrCreateAnonymousSessionId();
+    const attribution = normalizeAttribution(body.attribution);
     const result = await registerCityVisit({
       citySlug,
       sessionId,
-      origin: normalizedOrigin(body.origin),
+      attribution,
+      trafficType: await currentTrafficType(attribution),
     });
 
     if (result.status === "city_not_found") {

@@ -3167,3 +3167,13 @@ La disponibilidad programada extiende el estado manual existente sin reemplazarl
 La disponibilidad efectiva compartida por landing, precio y contacto se calcula en este orden: unidad activa, excepción vigente, modo manual o coincidencia con horario semanal. No se utilizarán procesos periódicos para cambiar estados. Los intervalos son `[inicio, fin)` y los horarios que cruzan medianoche quedan fuera de esta primera versión.
 
 La especificación técnica, compatibilidad y limitaciones se documentan en `docs/FASE-6.5-DISPONIBILIDAD.md`.
+
+---
+
+# 67. Analítica de comportamiento del piloto
+
+La plataforma utilizará analítica first-party y agregada para observar el producto actual sin modificar sus reglas. Reutilizará el identificador anónimo existente y podrá registrar visitas, exposiciones reales de tarjetas, interacciones, búsqueda de categorías, cambio de orden y contactos iniciados. WhatsApp y llamada continuarán representando intentos de contacto, no conversaciones, contrataciones ni servicios realizados.
+
+La atribución podrá conservar `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, origen y posición del servicio. Una señal técnica posterior al acceso válido a `/u/[token]` podrá clasificar eventos como probable tráfico interno; los demás serán tráfico público estimado y los históricos sin dimensiones permanecerán sin clasificar. Esta clasificación es exclusivamente analítica y nunca bloqueará funciones.
+
+No se almacenarán nombres, teléfonos de visitantes, conversaciones, ubicación precisa, IP, fingerprinting ni datos de GPS. La analítica permanecerá fuera del camino crítico y no alterará disponibilidad, ranking, contacto, SEO o navegación.

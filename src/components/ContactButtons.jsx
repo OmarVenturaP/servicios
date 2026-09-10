@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MessageCircle, Phone } from "lucide-react";
+import { browserAttribution, sendAnalyticsEvent } from "@/lib/analytics-client";
 
 const channels = {
   whatsapp: {
@@ -16,20 +17,21 @@ const channels = {
   },
 };
 
-export default function ContactButtons({ citySlug, serviceSlug, priceShown, disabled }) {
+export default function ContactButtons({ citySlug, serviceSlug, priceShown, resultPosition, disabled }) {
   const [pendingChannel, setPendingChannel] = useState(null);
   const [error, setError] = useState("");
 
   async function startContact(channel) {
     setPendingChannel(channel);
     setError("");
+    sendAnalyticsEvent({ citySlug, serviceSlug, event: "service_interaction", resultPosition, value: channel });
 
     try {
       const response = await fetch("/api/contactos", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ citySlug, serviceSlug, channel, priceShown }),
+        body: JSON.stringify({ citySlug, serviceSlug, channel, priceShown, resultPosition, attribution: browserAttribution() }),
       });
       const result = await response.json();
 

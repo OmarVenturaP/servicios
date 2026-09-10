@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { Link2Off } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import UnitStatusPanel from "@/components/UnitStatusPanel";
+import ProviderAnalyticsSignal from "@/components/ProviderAnalyticsSignal";
 import { resolveUnitPanel } from "@/services/units";
 
 export const metadata = {
@@ -35,6 +36,7 @@ export default async function UnitPage({ params }) {
 
   return (
     <div className="min-h-screen bg-[#eef1f6] py-0 sm:py-8">
+      <ProviderAnalyticsSignal token={token} />
       <UnitStatusPanel token={token} initialUnit={unit} />
     </div>
   );

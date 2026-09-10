@@ -1,6 +1,6 @@
-import { and, asc, count, countDistinct, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, count, countDistinct, desc, eq, gte, lte, min, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { catCiudades, datServicios, datUnidades, logContactos, logVisitas } from "@/db/schema";
+import { catCiudades, datServicios, datUnidades, logContactos, logEventosAnalitica, logVisitas } from "@/db/schema";
 
 export const METRICS_TIME_ZONE = "America/Mexico_City";
 
@@ -96,12 +96,17 @@ export async function getAdminMetrics(periodKey) {
   const db = getDb();
   const visitRange = and(gte(logVisitas.createdAt, period.start), lte(logVisitas.createdAt, period.end));
   const contactRange = and(gte(logContactos.createdAt, period.start), lte(logContactos.createdAt, period.end));
+  const eventRange = and(gte(logEventosAnalitica.createdAt, period.start), lte(logEventosAnalitica.createdAt, period.end));
   const whatsappCount = sql`sum(case when ${logContactos.canal} = 'whatsapp' then 1 else 0 end)`;
   const callCount = sql`sum(case when ${logContactos.canal} = 'llamada' then 1 else 0 end)`;
 
-  const [visitRows, contactRows, serviceRows, unitRows, visitCityRows, contactCityRows, visitDailyRows, contactDailyRows] = await Promise.all([
-    db.select({ visits: count(logVisitas.id), uniqueVisitors: countDistinct(logVisitas.sessionId) }).from(logVisitas).where(visitRange),
-    db.select({ contacts: count(logContactos.id), uniqueVisitors: countDistinct(logContactos.sessionId), whatsapp: whatsappCount, calls: callCount }).from(logContactos).where(contactRange),
+  const impressionCount = sql`sum(case when ${logEventosAnalitica.evento} = 'service_impression' then 1 else 0 end)`;
+  const interactionCount = sql`sum(case when ${logEventosAnalitica.evento} = 'service_interaction' then 1 else 0 end)`;
+  const firstVisits = db.select({ sessionId: logVisitas.sessionId, firstSeen: min(logVisitas.createdAt).as("first_seen") }).from(logVisitas).groupBy(logVisitas.sessionId).as("first_visits");
+
+  const [visitRows, contactRows, serviceRows, unitRows, visitCityRows, contactCityRows, visitDailyRows, contactDailyRows, eventRows, serviceEventRows, eventDailyRows, visitorTypeRows, visitTrafficRows, contactTrafficRows, sourceVisitRows, sourceContactRows] = await Promise.all([
+    db.select({ visits: count(logVisitas.id), uniqueVisitors: countDistinct(logVisitas.sessionId), newVisitors: sql`count(distinct case when ${firstVisits.firstSeen} >= ${period.start} then ${logVisitas.sessionId} end)`, returningVisitors: sql`count(distinct case when ${firstVisits.firstSeen} < ${period.start} then ${logVisitas.sessionId} end)` }).from(logVisitas).innerJoin(firstVisits, eq(firstVisits.sessionId, logVisitas.sessionId)).where(visitRange),
+    db.select({ contacts: count(logContactos.id), uniqueVisitors: countDistinct(logContactos.sessionId), attributedContactVisitors: sql`count(distinct case when ${logContactos.tipoTrafico} is not null then ${logContactos.sessionId} end)`, whatsapp: whatsappCount, calls: callCount }).from(logContactos).where(contactRange),
     db.select({
       serviceId: datServicios.id,
       serviceName: datServicios.nombre,
@@ -109,6 +114,7 @@ export async function getAdminMetrics(periodKey) {
       visible: datServicios.visible,
       contacts: count(logContactos.id),
       uniqueVisitors: countDistinct(logContactos.sessionId),
+      attributedContactVisitors: sql`count(distinct case when ${logContactos.tipoTrafico} is not null then ${logContactos.sessionId} end)`,
       whatsapp: whatsappCount,
       calls: callCount,
     }).from(logContactos)
@@ -165,6 +171,14 @@ export async function getAdminMetrics(periodKey) {
       .where(contactRange)
       .groupBy(sql`date_format(convert_tz(${logContactos.createdAt}, '+00:00', ${period.offset}), '%Y-%m-%d')`)
       .orderBy(asc(sql`date_format(convert_tz(${logContactos.createdAt}, '+00:00', ${period.offset}), '%Y-%m-%d')`)),
+    db.select({ impressions: impressionCount, interactions: interactionCount, exposedVisitors: sql`count(distinct case when ${logEventosAnalitica.evento} = 'service_impression' then ${logEventosAnalitica.sessionId} end)`, interactingVisitors: sql`count(distinct case when ${logEventosAnalitica.evento} = 'service_interaction' then ${logEventosAnalitica.sessionId} end)` }).from(logEventosAnalitica).where(eventRange),
+    db.select({ serviceId: datServicios.id, serviceName: datServicios.nombre, cityName: catCiudades.nombre, visible: datServicios.visible, impressions: impressionCount, interactions: interactionCount, exposedVisitors: sql`count(distinct case when ${logEventosAnalitica.evento} = 'service_impression' then ${logEventosAnalitica.sessionId} end)`, interactingVisitors: sql`count(distinct case when ${logEventosAnalitica.evento} = 'service_interaction' then ${logEventosAnalitica.sessionId} end)`, averagePosition: sql`avg(case when ${logEventosAnalitica.evento} = 'service_impression' then ${logEventosAnalitica.resultPosition} end)` }).from(logEventosAnalitica).innerJoin(datServicios, eq(datServicios.id, logEventosAnalitica.servicioId)).innerJoin(catCiudades, eq(catCiudades.id, logEventosAnalitica.ciudadId)).where(and(eventRange, sql`${logEventosAnalitica.servicioId} is not null`)).groupBy(datServicios.id, datServicios.nombre, catCiudades.nombre, datServicios.visible),
+    db.select({ date: sql`date_format(convert_tz(${logEventosAnalitica.createdAt}, '+00:00', ${period.offset}), '%Y-%m-%d')`, impressions: impressionCount, interactions: interactionCount }).from(logEventosAnalitica).where(eventRange).groupBy(sql`date_format(convert_tz(${logEventosAnalitica.createdAt}, '+00:00', ${period.offset}), '%Y-%m-%d')`),
+    db.select({ type: sql`case when ${firstVisits.firstSeen} >= ${period.start} then 'nuevo' else 'recurrente' end`, visitors: countDistinct(logVisitas.sessionId) }).from(logVisitas).innerJoin(firstVisits, eq(firstVisits.sessionId, logVisitas.sessionId)).where(visitRange).groupBy(sql`case when ${firstVisits.firstSeen} >= ${period.start} then 'nuevo' else 'recurrente' end`),
+    db.select({ type: sql`coalesce(${logVisitas.tipoTrafico}, 'sin_clasificar')`, visits: count(logVisitas.id), visitors: countDistinct(logVisitas.sessionId) }).from(logVisitas).where(visitRange).groupBy(sql`coalesce(${logVisitas.tipoTrafico}, 'sin_clasificar')`),
+    db.select({ type: sql`coalesce(${logContactos.tipoTrafico}, 'sin_clasificar')`, contacts: count(logContactos.id) }).from(logContactos).where(contactRange).groupBy(sql`coalesce(${logContactos.tipoTrafico}, 'sin_clasificar')`),
+    db.select({ source: sql`coalesce(${logVisitas.utmSource}, ${logVisitas.origen}, 'desconocido')`, medium: sql`coalesce(${logVisitas.utmMedium}, 'no_disponible')`, campaign: sql`coalesce(${logVisitas.utmCampaign}, 'sin_campaña')`, visits: count(logVisitas.id), visitors: countDistinct(logVisitas.sessionId) }).from(logVisitas).where(visitRange).groupBy(sql`coalesce(${logVisitas.utmSource}, ${logVisitas.origen}, 'desconocido')`, sql`coalesce(${logVisitas.utmMedium}, 'no_disponible')`, sql`coalesce(${logVisitas.utmCampaign}, 'sin_campaña')`),
+    db.select({ source: sql`coalesce(${logContactos.utmSource}, ${logContactos.origen}, 'desconocido')`, medium: sql`coalesce(${logContactos.utmMedium}, 'no_disponible')`, campaign: sql`coalesce(${logContactos.utmCampaign}, 'sin_campaña')`, contacts: count(logContactos.id) }).from(logContactos).where(contactRange).groupBy(sql`coalesce(${logContactos.utmSource}, ${logContactos.origen}, 'desconocido')`, sql`coalesce(${logContactos.utmMedium}, 'no_disponible')`, sql`coalesce(${logContactos.utmCampaign}, 'sin_campaña')`),
   ]);
 
   const visits = numeric(visitRows[0]?.visits);
@@ -197,12 +211,54 @@ export async function getAdminMetrics(periodKey) {
 
   const dailyMap = new Map();
   for (const row of visitDailyRows) {
-    dailyMap.set(row.date, { date: row.date, visits: numeric(row.visits), uniqueVisitors: numeric(row.uniqueVisitors), contacts: 0 });
+    dailyMap.set(row.date, { date: row.date, visits: numeric(row.visits), uniqueVisitors: numeric(row.uniqueVisitors), contacts: 0, impressions: 0, interactions: 0 });
   }
   for (const row of contactDailyRows) {
-    const day = dailyMap.get(row.date) ?? { date: row.date, visits: 0, uniqueVisitors: 0, contacts: 0 };
+    const day = dailyMap.get(row.date) ?? { date: row.date, visits: 0, uniqueVisitors: 0, contacts: 0, impressions: 0, interactions: 0 };
     day.contacts = numeric(row.contacts);
     dailyMap.set(row.date, day);
+  }
+  for (const row of eventDailyRows) {
+    const day = dailyMap.get(row.date) ?? { date: row.date, visits: 0, uniqueVisitors: 0, contacts: 0, impressions: 0, interactions: 0 };
+    day.impressions = numeric(row.impressions);
+    day.interactions = numeric(row.interactions);
+    dailyMap.set(row.date, day);
+  }
+
+  const serviceMap = new Map(serviceEventRows.map((row) => [row.serviceId, {
+    id: row.serviceId,
+    name: row.serviceName,
+    cityName: row.cityName,
+    visible: Boolean(row.visible),
+    impressions: numeric(row.impressions),
+    exposedVisitors: numeric(row.exposedVisitors),
+    interactions: numeric(row.interactions),
+    interactingVisitors: numeric(row.interactingVisitors),
+    averagePosition: row.averagePosition === null ? null : Number(Number(row.averagePosition).toFixed(1)),
+    contacts: 0, whatsapp: 0, calls: 0, uniqueVisitors: 0, attributedContactVisitors: 0,
+  }]));
+  for (const row of serviceRows) {
+    const service = serviceMap.get(row.serviceId) ?? { id: row.serviceId, name: row.serviceName, cityName: row.cityName, visible: Boolean(row.visible), impressions: 0, exposedVisitors: 0, interactions: 0, averagePosition: null };
+    Object.assign(service, contactSummary(row), { uniqueVisitors: numeric(row.uniqueVisitors), attributedContactVisitors: numeric(row.attributedContactVisitors) });
+    serviceMap.set(row.serviceId, service);
+  }
+
+  const trafficMap = new Map();
+  for (const row of visitTrafficRows) trafficMap.set(row.type, { type: row.type, visits: numeric(row.visits), visitors: numeric(row.visitors), contacts: 0 });
+  for (const row of contactTrafficRows) {
+    const item = trafficMap.get(row.type) ?? { type: row.type, visits: 0, visitors: 0, contacts: 0 };
+    item.contacts = numeric(row.contacts);
+    trafficMap.set(row.type, item);
+  }
+
+  const sourceKey = (row) => `${row.source}|${row.medium}|${row.campaign}`;
+  const sourceMap = new Map();
+  for (const row of sourceVisitRows) sourceMap.set(sourceKey(row), { source: row.source, medium: row.medium, campaign: row.campaign, visits: numeric(row.visits), visitors: numeric(row.visitors), contacts: 0 });
+  for (const row of sourceContactRows) {
+    const key = sourceKey(row);
+    const item = sourceMap.get(key) ?? { source: row.source, medium: row.medium, campaign: row.campaign, visits: 0, visitors: 0, contacts: 0 };
+    item.contacts = numeric(row.contacts);
+    sourceMap.set(key, item);
   }
 
   return {
@@ -219,16 +275,16 @@ export async function getAdminMetrics(periodKey) {
       whatsapp: numeric(contactRows[0]?.whatsapp),
       calls: numeric(contactRows[0]?.calls),
       contactRate: percentage(contacts, visits),
+      sessions: visits,
+      newVisitors: numeric(visitRows[0]?.newVisitors),
+      returningVisitors: numeric(visitRows[0]?.returningVisitors),
+      impressions: numeric(eventRows[0]?.impressions),
+      exposedVisitors: numeric(eventRows[0]?.exposedVisitors),
+      interactions: numeric(eventRows[0]?.interactions),
+      interactionRate: percentage(numeric(eventRows[0]?.interactingVisitors), numeric(eventRows[0]?.exposedVisitors)),
+      exposureContactRate: percentage(numeric(contactRows[0]?.attributedContactVisitors), numeric(eventRows[0]?.exposedVisitors)),
     },
-    services: serviceRows.map((row) => ({
-      id: row.serviceId,
-      name: row.serviceName,
-      cityName: row.cityName,
-      visible: Boolean(row.visible),
-      ...contactSummary(row),
-      uniqueVisitors: numeric(row.uniqueVisitors),
-      share: percentage(numeric(row.contacts), contacts),
-    })),
+    services: [...serviceMap.values()].map((service) => ({ ...service, share: percentage(service.contacts, contacts), interactionRate: percentage(service.interactingVisitors, service.exposedVisitors), contactRate: percentage(service.attributedContactVisitors, service.exposedVisitors) })).sort((a, b) => b.contacts - a.contacts || b.impressions - a.impressions || a.name.localeCompare(b.name, "es-MX")),
     units: unitRows.map((row) => ({
       serviceId: row.serviceId,
       serviceName: row.serviceName,
@@ -241,5 +297,8 @@ export async function getAdminMetrics(periodKey) {
       .map((city) => ({ ...city, contactRate: percentage(city.contacts, city.visits) }))
       .sort((left, right) => right.contacts - left.contacts || left.name.localeCompare(right.name, "es-MX")),
     daily: [...dailyMap.values()].sort((left, right) => left.date.localeCompare(right.date)),
+    visitorTypes: visitorTypeRows.map((row) => ({ type: row.type, visitors: numeric(row.visitors) })),
+    traffic: [...trafficMap.values()].sort((a, b) => b.visits - a.visits),
+    sources: [...sourceMap.values()].map((item) => ({ ...item, contactRate: percentage(item.contacts, item.visits) })).sort((a, b) => b.visits - a.visits || b.contacts - a.contacts),
   };
 }

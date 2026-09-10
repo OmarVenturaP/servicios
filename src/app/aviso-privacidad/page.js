@@ -21,7 +21,7 @@ export default function PrivacyPage() {
 
       <h2>2. Datos que podemos tratar</h2>
       <p>De los prestadores pueden tratarse el nombre del servicio, teléfono, WhatsApp, descripción, cobertura, precio base, disponibilidad, logotipo y datos operativos de sus unidades.</p>
-      <p className="mt-3">Actualmente, los usuarios que buscan servicios no necesitan crear una cuenta. Durante el uso pueden generarse un identificador anónimo de sesión, eventos de visita y contacto, el canal seleccionado y el precio mostrado al iniciar el contacto.</p>
+      <p className="mt-3">Actualmente, los usuarios que buscan servicios no necesitan crear una cuenta. Durante el uso pueden generarse un identificador anónimo, eventos de visita, exposición e interacción con servicios, búsquedas de categorías, cambios de orden, intentos de contacto, el canal seleccionado, la posición del resultado y el precio mostrado. También pueden conservarse el sitio de referencia y parámetros de campaña UTM incluidos en el enlace.</p>
 
       <h2>3. Datos que actualmente no solicitamos</h2>
       <p>La versión actual no solicita al cliente ubicación GPS, tarjeta bancaria, contraseña, documentos oficiales, pagos ni ubicación en tiempo real.</p>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
       <p>Cuando eliges WhatsApp o llamada, la comunicación ocurre mediante proveedores externos. <strong>Servicios</strong> no controla sus políticas ni el tratamiento que esas plataformas realizan conforme a sus propios términos.</p>
 
       <h2>6. Cookies</h2>
-      <p><strong>Servicios</strong> utiliza una cookie para conservar un identificador aleatorio y anónimo de sesión. Este identificador permite relacionar eventos operativos básicos, como una visita y un contacto, y no representa por sí mismo una identidad real. No se utiliza fingerprinting avanzado para este fin.</p>
+      <p><strong>Servicios</strong> utiliza una cookie para conservar un identificador aleatorio y anónimo. Este identificador permite relacionar eventos operativos básicos y estimar visitas nuevas o recurrentes, pero no representa por sí mismo una identidad real. Cuando un dispositivo accede legítimamente al panel privado de una unidad, puede guardarse además una señal técnica para separar de forma aproximada el tráfico de proveedores o pruebas del tráfico público. Esta señal no identifica públicamente al repartidor ni modifica su experiencia. No se utiliza fingerprinting avanzado.</p>
 
       <h2>7. Conservación</h2>
       <p>La información se conservará durante el tiempo necesario para las finalidades operativas, legales o de seguridad aplicables. Los periodos concretos podrán definirse conforme evolucione la operación y sus obligaciones.</p>

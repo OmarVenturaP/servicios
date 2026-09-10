@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, BarChart3, CalendarDays, KeyRound, MessageCircle, MousePointerClick, Phone, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarDays, Eye, KeyRound, MessageCircle, MousePointerClick, Phone, Repeat2, Users } from "lucide-react";
 import BrandMark from "./BrandMark";
 import Header from "./Header";
 
@@ -112,6 +112,8 @@ export default function AdminMetricsPanel() {
             <MetricCard icon={BarChart3} label="Tasa de contacto" value={`${data.summary.contactRate}%`} />
             <MetricCard icon={MessageCircle} label="Clics en WhatsApp" value={formatNumber(data.summary.whatsapp)} accent="text-emerald-600" />
             <MetricCard icon={Phone} label="Clics en llamada" value={formatNumber(data.summary.calls)} />
+            <MetricCard icon={Eye} label="Impresiones reales" value={formatNumber(data.summary.impressions)} />
+            <MetricCard icon={Repeat2} label="Sesiones aproximadas" value={formatNumber(data.summary.sessions)} />
           </section>
 
           <p className="mt-3 text-xs leading-5 text-slate-500">Los visitantes únicos son sesiones o dispositivos anónimos aproximados. Los contactos representan intención de contacto, no mensajes enviados, llamadas completadas ni contrataciones.</p>
@@ -123,6 +125,25 @@ export default function AdminMetricsPanel() {
             </div>
           ) : (
             <>
+              <MetricsSection title="Embudo de comportamiento">
+                <div className="grid gap-2">
+                  <FunnelRow label="Visitas" value={data.summary.visits} />
+                  <FunnelRow label="Servicios expuestos" value={data.summary.impressions} />
+                  <FunnelRow label="Interacciones" value={data.summary.interactions} />
+                  <FunnelRow label="Contactos iniciados" value={data.summary.contacts} />
+                </div>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Interacción sobre exposición: {data.summary.interactionRate}% · Contacto sobre exposición: {data.summary.exposureContactRate}%</p>
+              </MetricsSection>
+
+              <MetricsSection title="Visitantes nuevos y recurrentes">
+                <div className="grid grid-cols-2 gap-3"><CompactMetric label="Nuevos" value={data.summary.newVisitors} /><CompactMetric label="Recurrentes" value={data.summary.returningVisitors} /></div>
+                <p className="mt-3 text-xs text-slate-500">Estimación basada en la primera visita observada del identificador anónimo.</p>
+              </MetricsSection>
+
+              <MetricsSection title="Público estimado e interno/pruebas">
+                {data.traffic.length ? <div className="divide-y divide-slate-100">{data.traffic.map((item) => <article key={item.type} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"><div><p className="font-bold capitalize text-slate-900">{item.type.replaceAll("_", " ")}</p><p className="text-xs text-slate-500">{item.visitors} visitantes · {item.contacts} contactos</p></div><p className="text-lg font-black text-[var(--brand-navy)]">{item.visits}</p></article>)}</div> : <EmptyLine />}
+              </MetricsSection>
+
               <MetricsSection title="Evolución diaria">
                 <div className="space-y-4">
                   {data.daily.map((day) => (
@@ -137,8 +158,12 @@ export default function AdminMetricsPanel() {
                 </div>
               </MetricsSection>
 
-              <MetricsSection title="Contactos por servicio">
+              <MetricsSection title="Comportamiento por servicio">
                 {data.services.length ? <div className="divide-y divide-slate-100">{data.services.map((service) => <ServiceMetric key={service.id} service={service} />)}</div> : <EmptyLine />}
+              </MetricsSection>
+
+              <MetricsSection title="Fuentes y campañas">
+                {data.sources.length ? <div className="divide-y divide-slate-100">{data.sources.map((source) => <SourceMetric key={`${source.source}-${source.medium}-${source.campaign}`} source={source} />)}</div> : <EmptyLine />}
               </MetricsSection>
 
               <MetricsSection title="Contactos por unidad">
@@ -164,12 +189,24 @@ function MetricsSection({ title, children }) {
   return <section className={`${cardClass} mt-5`}><h2 className="text-lg font-semibold text-[var(--brand-navy)]">{title}</h2><div className="mt-3">{children}</div></section>;
 }
 
+function CompactMetric({ label, value }) {
+  return <div className="rounded-xl bg-slate-50 p-3"><p className="text-2xl font-black text-[var(--brand-navy)]">{formatNumber(value)}</p><p className="mt-1 text-xs font-bold text-slate-500">{label}</p></div>;
+}
+
+function FunnelRow({ label, value }) {
+  return <div className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3"><span className="text-sm font-bold text-slate-600">{label}</span><strong className="text-lg text-[var(--brand-navy)]">{formatNumber(value)}</strong></div>;
+}
+
 function ChannelBreakdown({ whatsapp, calls }) {
   return <p className="mt-1 text-xs text-slate-500">{whatsapp} WhatsApp · {calls} llamadas</p>;
 }
 
 function ServiceMetric({ service }) {
-  return <article className="py-3 first:pt-0 last:pb-0"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-slate-900">{service.name}</h3>{!service.visible ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.68rem] font-bold text-slate-600">Oculto</span> : null}</div><p className="text-xs text-slate-500">{service.cityName} · {service.uniqueVisitors} visitantes con contacto</p><ChannelBreakdown whatsapp={service.whatsapp} calls={service.calls} /></div><div className="shrink-0 text-right"><p className="text-lg font-black text-[var(--brand-navy)]">{service.contacts}</p><p className="text-xs font-bold text-[var(--brand-blue)]">{service.share}%</p></div></div></article>;
+  return <article className="py-3 first:pt-0 last:pb-0"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-slate-900">{service.name}</h3>{!service.visible ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.68rem] font-bold text-slate-600">Oculto</span> : null}</div><p className="text-xs text-slate-500">{service.cityName} · {service.exposedVisitors} visitantes expuestos</p><p className="mt-1 text-xs text-slate-500">{service.impressions} impresiones · {service.interactions} interacciones · posición media {service.averagePosition ?? "no disponible"}</p><ChannelBreakdown whatsapp={service.whatsapp} calls={service.calls} /><p className="mt-1 text-xs font-bold text-[var(--brand-blue)]">Interacción {service.interactionRate}% · Contacto/exposición {service.contactRate}%</p></div><div className="shrink-0 text-right"><p className="text-lg font-black text-[var(--brand-navy)]">{service.contacts}</p><p className="text-xs font-bold text-[var(--brand-blue)]">{service.share}% contactos</p></div></div></article>;
+}
+
+function SourceMetric({ source }) {
+  return <article className="py-3 first:pt-0 last:pb-0"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate font-bold text-slate-900">{source.source}</h3><p className="text-xs text-slate-500">{source.medium} · {source.campaign}</p><p className="mt-1 text-xs text-slate-500">{source.visitors} visitantes · {source.contacts} contactos · {source.contactRate}%</p></div><p className="text-lg font-black text-[var(--brand-navy)]">{source.visits}</p></div></article>;
 }
 
 function UnitMetric({ unit }) {

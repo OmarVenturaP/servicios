@@ -19,7 +19,7 @@ export async function POST(request) {
     if (error instanceof SyntaxError) {
       return Response.json({ success: false, error: "La solicitud no es válida." }, { status: 400 });
     }
-    console.error("No se pudieron consultar las métricas administrativas");
+    console.error("No se pudieron consultar las métricas administrativas", error?.cause?.code ?? error?.code ?? "unknown");
     return Response.json({ success: false, error: "No se pudieron consultar las métricas." }, { status: 500 });
   }
 }

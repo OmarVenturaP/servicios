@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bike, Check, Droplet, Ellipsis, Package, PlugZap, Search, Snowflake, Sparkles, Wrench, X } from "lucide-react";
 import ServiceList from "./ServiceList";
 import { serviceCategories } from "@/config/service-categories";
+import { sendAnalyticsEvent } from "@/lib/analytics-client";
 
 const categoryIcons = {
   bike: Bike,
@@ -44,6 +45,7 @@ function sortByPrice(services) {
 export default function LandingExperience({ citySlug, cityName, services, totals }) {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("recommended");
+  const observedSearches = useRef(new Set());
   const normalizedQuery = normalize(query);
   const visibleCategories = useMemo(() => serviceCategories.filter((category) => (
     !normalizedQuery || category.keywords.some((keyword) => keyword.includes(normalizedQuery) || normalizedQuery.includes(keyword))
@@ -55,6 +57,20 @@ export default function LandingExperience({ citySlug, cityName, services, totals
   const availabilityLabel = totals.availableUnits === 1
     ? "1 repartidor disponible ahora"
     : `${totals.availableUnits} repartidores disponibles ahora`;
+
+  useEffect(() => {
+    if (normalizedQuery.length < 2 || observedSearches.current.has(normalizedQuery)) return;
+    const timer = window.setTimeout(() => {
+      observedSearches.current.add(normalizedQuery);
+      sendAnalyticsEvent({ citySlug, event: "search", value: normalizedQuery });
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [citySlug, normalizedQuery]);
+
+  function changeSortMode(value) {
+    setSortMode(value);
+    sendAnalyticsEvent({ citySlug, event: "filter_change", value });
+  }
 
   return (
     <>
@@ -117,7 +133,7 @@ export default function LandingExperience({ citySlug, cityName, services, totals
                 ["price", "Menor precio"],
               ].map(([value, label]) => {
                 const selected = sortMode === value;
-                return <button key={value} type="button" onClick={() => setSortMode(value)} aria-pressed={selected} className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-extrabold transition focus-visible:outline-2 focus-visible:outline-[var(--brand-blue)] ${selected ? "bg-white text-[var(--brand-blue)] shadow-sm ring-1 ring-slate-200" : "text-slate-600"}`}>{selected ? <Check aria-hidden="true" size={15} strokeWidth={3} /> : null}{label}</button>;
+                return <button key={value} type="button" onClick={() => changeSortMode(value)} aria-pressed={selected} className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-extrabold transition focus-visible:outline-2 focus-visible:outline-[var(--brand-blue)] ${selected ? "bg-white text-[var(--brand-blue)] shadow-sm ring-1 ring-slate-200" : "text-slate-600"}`}>{selected ? <Check aria-hidden="true" size={15} strokeWidth={3} /> : null}{label}</button>;
               })}
             </div>
             <div className="mt-3">
