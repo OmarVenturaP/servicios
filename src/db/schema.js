@@ -86,6 +86,33 @@ export const datServicios = mysqlTable(
   ],
 );
 
+export const datContactosEmergencia = mysqlTable(
+  "dat_contactos_emergencia",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ciudadId: int("ciudad_id")
+      .notNull()
+      .references(() => catCiudades.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    nombre: varchar("nombre", { length: 160 }).notNull(),
+    slug: varchar("slug", { length: 160 }).notNull(),
+    tipo: varchar("tipo", { length: 40 }).notNull(),
+    telefono: varchar("telefono", { length: 30 }).notNull(),
+    extension: varchar("extension", { length: 10 }),
+    descripcionEmergencia: text("descripcion_emergencia"),
+    horarioTexto: varchar("horario_texto", { length: 255 }),
+    fuenteUrl: varchar("fuente_url", { length: 500 }),
+    verificadoAt: timestamp("verificado_at"),
+    visible: boolean("visible").default(false).notNull(),
+    orden: int("orden").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_emergencias_ciudad_slug").on(table.ciudadId, table.slug),
+    index("idx_emergencias_publicacion").on(table.ciudadId, table.visible, table.orden),
+  ],
+);
+
 export const datUnidades = mysqlTable(
   "dat_unidades",
   {
@@ -241,9 +268,17 @@ export const logEventosAnalitica = mysqlTable(
 
 export const catCiudadesRelations = relations(catCiudades, ({ many }) => ({
   servicios: many(datServicios),
+  contactosEmergencia: many(datContactosEmergencia),
   visitas: many(logVisitas),
   contactos: many(logContactos),
   eventosAnalitica: many(logEventosAnalitica),
+}));
+
+export const datContactosEmergenciaRelations = relations(datContactosEmergencia, ({ one }) => ({
+  ciudad: one(catCiudades, {
+    fields: [datContactosEmergencia.ciudadId],
+    references: [catCiudades.id],
+  }),
 }));
 
 export const catEstadosUnidadRelations = relations(catEstadosUnidad, ({ many }) => ({

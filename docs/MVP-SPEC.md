@@ -5,6 +5,8 @@
 > Ciudad piloto: Tonalá, Chiapas, México  
 > Arquitectura: Multi-ciudad  
 > Plataforma: Web / Mobile First
+>
+> Actualización: 11 de septiembre de 2026 — apartado fijo de Emergencias (especificado; pendiente de implementación)
 
 ---
 
@@ -42,9 +44,13 @@ El objetivo es construir únicamente lo necesario para validar:
 
 Servicios {ciudad} es un directorio dinámico de servicios locales.
 
-La primera categoría disponible será:
+La primera categoría comercial disponible será:
 
 **Mandados / Motomandados**
+
+El MVP incluirá además un apartado fijo de **Servicios de Emergencia**,
+con directorio institucional por ciudad y llamada directa, definido en
+la sección 68. Sus reglas son independientes de los proveedores comerciales.
 
 La plataforma permitirá encontrar servicios que tengan repartidores
 realmente disponibles en ese momento y contactarlos directamente.
@@ -144,9 +150,9 @@ sea razonable.
 
 ## Administración inicial
 
-- TablePlus
-
-No construir panel administrativo durante el MVP.
+- Panel operativo mínimo `/admin`, definido en la sección 51.
+- TablePlus como herramienta técnica complementaria.
+- Gestión de contactos de emergencia en el mismo panel, según la sección 68.
 
 ## Hosting
 
@@ -278,6 +284,7 @@ Tablas requeridas:
 
     dat_servicios
     dat_unidades
+    dat_contactos_emergencia (ampliación definida en la sección 68)
 
     log_estados_unidad
     log_visitas
@@ -455,6 +462,10 @@ NO solicitar inicialmente:
 ---
 
 # 17. Precio
+
+Las reglas de precio, disponibilidad y distribución de contactos de las
+secciones 17 a 32 corresponden a proveedores comerciales. Emergencias
+utiliza exclusivamente las reglas de la sección 68.
 
 El precio pertenece a la unidad.
 
@@ -780,7 +791,9 @@ Aplicar la misma lógica de selección:
 - contacto central;
 - o unidad.
 
-Registrar el contacto antes de iniciar la llamada.
+Registrar el contacto comercial antes de iniciar la llamada.
+Las llamadas de Emergencias usan enlaces directos y no dependen de este
+registro ni del endpoint comercial (sección 68).
 
 Canales iniciales:
 
@@ -850,6 +863,10 @@ Definir el evento de visita de forma consistente.
 ---
 
 # 35. Métrica principal
+
+La conversión comercial corresponde a visitas de la landing de proveedores
+y contactos comerciales. Los accesos y clics de Emergencias se mantienen
+separados y no alimentan esta conversión (sección 68.8).
 
 La métrica principal del MVP será:
 
@@ -1082,7 +1099,10 @@ Ejemplos conceptuales:
 
 Sin embargo:
 
-**SOLO Mandados será funcional en MVP v1.**
+**Mandados será la única categoría comercial funcional en MVP v1.**
+
+Emergencias será un apartado fijo funcional según la sección 68; no es
+una categoría comercial futura ni se etiqueta como "Próximamente".
 
 No construir todavía:
 
@@ -1211,6 +1231,16 @@ Ejemplo:
 
     /tonala/motomandados-el-profe
 
+Emergencias por ciudad:
+
+    /[ciudad]/emergencias
+
+Ejemplo:
+
+    /tonala/emergencias
+
+Reservar el segmento `emergencias` frente a futuras rutas de servicios.
+
 Unidad privada:
 
     /u/[token]
@@ -1229,6 +1259,9 @@ No exponer IDs internos en URLs públicas cuando no sea necesario.
 
         [ciudad]/
           page.js
+
+          emergencias/
+            page.js
 
           [servicio]/
             page.js
@@ -1311,7 +1344,8 @@ El panel permitirá:
 - generar acceso privado de unidad;
 - rotar acceso privado de unidad;
 - copiar el enlace generado;
-- preparar el enlace para compartir por WhatsApp.
+- preparar el enlace para compartir por WhatsApp;
+- gestionar contactos de emergencia por ciudad conforme a la sección 68.
 
 TablePlus seguirá utilizándose para:
 
@@ -1949,7 +1983,10 @@ NO implementar todavía:
 - fingerprinting avanzado;
 - ranking comercial;
 - posiciones patrocinadas;
-- categorías adicionales funcionales.
+- categorías comerciales adicionales funcionales.
+
+El apartado fijo de Emergencias está incluido mediante la sección 68.
+No incluye recepción de incidentes ni despacho de unidades de emergencia.
 
 ---
 
@@ -1963,6 +2000,9 @@ Antes de agregar una funcionalidad preguntar:
 Si la respuesta es no:
 
 **posponerla.**
+
+Emergencias es una ampliación explícita de utilidad pública incluida en
+la sección 68; su inclusión no depende de generar contactos comerciales.
 
 ---
 
@@ -2090,6 +2130,21 @@ Sobre la ruta `/[ciudad]` ya existente:
 - sin exponer identificadores de sesión ni datos de contacto;
 - sin borrado de métricas desde la interfaz.
 
+## Fase técnica — Apartado fijo de Emergencias
+
+Estado: especificado; pendiente de implementación.
+
+- migración independiente para `dat_contactos_emergencia`;
+- página `/[ciudad]/emergencias` y consulta por ciudad;
+- acceso permanente en navegación y acceso destacado en la landing;
+- tarjetas con llamada directa;
+- gestión protegida desde `/admin`;
+- verificación de datos antes de publicación;
+- validación de los criterios de aceptación de la sección 68.10.
+
+Esta ampliación no modifica retroactivamente el alcance ni la condición
+de ausencia de migraciones de la Fase 6.2.
+
 ## Fase técnica 7 — QA
 
 - mobile;
@@ -2205,6 +2260,9 @@ El MVP técnico estará listo para piloto cuando:
 - TablePlus permita administrar los datos;
 - existan al menos 5 servicios preparados para el piloto.
 
+Para considerar completa la ampliación de Emergencias deberán cumplirse
+adicionalmente los criterios de la sección 68.10.
+
 ---
 
 # 62. Objetivo posterior al MVP
@@ -2238,7 +2296,9 @@ Y permitir completar inmediatamente la siguiente acción:
 
 > Contactarlo.
 
-Todo lo que no contribuya directamente a esas dos cosas puede esperar.
+El apartado fijo de Emergencias agrega acceso directo a contactos
+institucionales por ciudad, bajo las reglas independientes de la sección 68.
+Las demás ampliaciones pueden esperar a la validación del piloto.
 
 # 64. Roadmap — Acceso de administrador de servicio / flotilla
 
@@ -2317,12 +2377,16 @@ La landing pública debe comunicar desde el MVP que Servicios {ciudad}
 es una plataforma de servicios locales y NO una aplicación exclusiva
 de motomandados.
 
-Durante el piloto, Mandados será la única categoría completamente
+Durante el piloto, Mandados será la única categoría comercial completamente
 funcional.
 
 La interfaz podrá mostrar otros tipos de servicio como parte de la
 visión futura de la plataforma, siempre identificándolos claramente
 como "Próximamente".
+
+Emergencias se incorpora como apartado fijo independiente (sección 68).
+No obliga a mover Mandados a otra ruta ni a convertir las categorías
+comerciales futuras en funcionales.
 
 El objetivo de esta sección es definir:
 
@@ -2373,7 +2437,7 @@ No presentar una categoría futura como disponible si todavía no existe
 un flujo funcional para utilizarla.
 
 El bloque "¿Qué necesitas?" debe permanecer visible incluso mientras
-Mandados sea la única categoría funcional, ya que ayuda a comunicar la
+Mandados sea la única categoría comercial funcional, ya que ayuda a comunicar la
 visión multicategoría de Servicios {ciudad}.
 
 
@@ -2511,7 +2575,7 @@ No es necesario crear todavía:
 
     /tonala/mandados
 
-Mientras Mandados sea la única categoría funcional, introducir una
+Mientras Mandados sea la única categoría comercial funcional, introducir una
 segunda ruta únicamente agregaría navegación sin aportar suficiente
 valor.
 
@@ -2907,9 +2971,10 @@ implementarse funcionalmente durante el piloto.
 
 Durante el MVP:
 
-    Mandados = funcional
+    Mandados = categoría comercial funcional
+    Emergencias = apartado fijo funcional (sección 68)
 
-Las demás categorías que se decida mostrar deben identificarse como:
+Las demás categorías comerciales que se decida mostrar deben identificarse como:
 
     Próximamente
 
@@ -2929,7 +2994,7 @@ mercado y necesidades locales.
 
 ## 65.16 Evolución futura de navegación
 
-Cuando exista al menos una segunda categoría funcional, deberá
+Cuando exista al menos una segunda categoría comercial funcional, deberá
 evaluarse la evolución de la navegación.
 
 Arquitectura conceptual futura:
@@ -2953,7 +3018,7 @@ Posteriormente, si las fichas individuales lo requieren:
     /tonala/fletes/{servicio}
 
 La estructura definitiva deberá diseñarse cuando se implemente la
-segunda categoría funcional.
+segunda categoría comercial funcional.
 
 NO realizar esta migración durante la Fase 6.2.
 
@@ -3177,3 +3242,232 @@ La plataforma utilizará analítica first-party y agregada para observar el prod
 La atribución podrá conservar `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, origen y posición del servicio. Una señal técnica posterior al acceso válido a `/u/[token]` podrá clasificar eventos como probable tráfico interno; los demás serán tráfico público estimado y los históricos sin dimensiones permanecerán sin clasificar. Esta clasificación es exclusivamente analítica y nunca bloqueará funciones.
 
 No se almacenarán nombres, teléfonos de visitantes, conversaciones, ubicación precisa, IP, fingerprinting ni datos de GPS. La analítica permanecerá fuera del camino crítico y no alterará disponibilidad, ranking, contacto, SEO o navegación.
+
+
+---
+
+# 68. Apartado fijo — Servicios de Emergencia
+
+Estado: especificado; pendiente de implementación.
+
+Esta sección amplía el MVP con un directorio institucional por ciudad.
+Tiene prioridad para Emergencias sobre las reglas comerciales de precio,
+disponibilidad, contacto y categorías futuras. No modifica esas reglas
+para Mandados ni declara que la funcionalidad ya esté implementada.
+
+## 68.1 Propósito y alcance
+
+Permitir encontrar contactos de Policía, Protección Civil, Bomberos y
+otras instituciones de emergencia con información verificada.
+
+“Fijo” significa que el acceso a la sección permanece visible; los
+contactos pueden crearse, corregirse, ordenarse y ocultarse desde `/admin`.
+No depende del número de proveedores, unidades disponibles o fase del piloto.
+
+La plataforma facilita el contacto. No recibe reportes, despacha unidades,
+confirma atención ni garantiza tiempos de respuesta. No mostrar precios,
+ranking comercial, posiciones pagadas, estados de repartidores ni etiquetas
+“Disponible ahora” en estas tarjetas. “24 horas” solo se muestra si el horario
+ha sido confirmado; no equivale a disponibilidad en tiempo real.
+
+## 68.2 Accesos, ciudad y navegación
+
+- Añadir Emergencias a la barra inferior: Inicio · Buscar · Emergencias · Más.
+- Añadir un acceso destacado antes del bloque de categorías de la landing.
+- Ambos accesos llevan a `/[ciudad]/emergencias` y conservan la ciudad actual.
+- El acceso destacado no pertenece a la lista filtrada: no desaparece al
+  buscar, limpiar la búsqueda o cambiar el orden de Mandados.
+- Usar icono y texto, con acento rojo discreto y contraste legible. El color
+  no debe ser el único indicador de la función o selección.
+- Los controles deben ser accesibles por teclado y cómodos en móvil.
+
+Resolver la ciudad mediante su slug y validar que exista y esté activa.
+Una ciudad inexistente o inactiva devuelve la página de no encontrado.
+La página y las tarjetas indican ciudad y estado; nunca sustituir contactos
+locales faltantes por contactos de otra ciudad.
+
+Ajustar `BottomNavigation` para reconocer también las rutas anidadas.
+Desde Emergencias, Inicio lleva a `/[ciudad]` y Buscar a
+`/[ciudad]#categorias`; Emergencias se identifica como la sección actual.
+En páginas sin contexto de ciudad, usar la ciudad piloto configurada de
+forma centralizada, sin duplicar el slug en los componentes.
+
+La ruta `/[ciudad]` mantiene el listado de Mandados. No crear
+`/[ciudad]/mandados` como consecuencia de esta ampliación.
+
+## 68.3 Presentación de la página
+
+Título: “Servicios de emergencia en {ciudad}”, con el estado visible.
+Mostrar primero el contacto general verificado, cuando esté configurado,
+y después las instituciones según el orden editorial guardado.
+
+Cada tarjeta muestra:
+
+- nombre de la institución y tipo;
+- teléfono legible y extensión si existe;
+- botón Llamar;
+- descripción de alcance y horario cuando estén confirmados;
+- fuente oficial enlazada y fecha de última verificación.
+
+La fecha expresa verificación del dato de contacto, no certificación del
+servicio. No usar el badge comercial “Proveedor verificado”.
+
+Si no hay contactos publicados, conservar el acceso y mostrar:
+“Aún no hay contactos de emergencia verificados publicados para esta ciudad”.
+No crear teléfonos ficticios, tarjetas con llamadas de ejemplo ni enlaces
+inactivos que parezcan operativos. Un error de consulta debe mostrar un
+estado de error con reintento, distinto de una lista legítimamente vacía.
+
+## 68.4 Modelo de datos
+
+Crear `dat_contactos_emergencia` en Drizzle mediante una migración nueva.
+No reutilizar `dat_servicios` ni crear unidades artificiales para instituciones.
+
+| Campo | Tipo propuesto | Regla |
+| --- | --- | --- |
+| id | INT PK autoincremental | Identificador interno |
+| ciudad_id | INT FK | Obligatorio; referencia a `cat_ciudades` |
+| nombre | VARCHAR(160) | Obligatorio; institución o línea |
+| slug | VARCHAR(160) | Obligatorio; único dentro de la ciudad |
+| tipo | VARCHAR(40) | general, policia, proteccion_civil, bomberos u otros |
+| telefono | VARCHAR(30) | Obligatorio; valor normalizado para marcación |
+| extension | VARCHAR(10) NULL | Solo dígitos; se muestra por separado |
+| descripcion_emergencia | TEXT NULL | Descripción breve del alcance y los casos de uso del número |
+| horario_texto | VARCHAR(255) NULL | Horario confirmado; informativo |
+| fuente_url | VARCHAR(500) NULL | URL oficial de referencia |
+| verificado_at | TIMESTAMP NULL | Fecha real de revisión del teléfono |
+| visible | BOOLEAN DEFAULT false | Publicación controlada |
+| orden | INT DEFAULT 0 | Entero no negativo; prioridad dentro de su grupo |
+| created_at | TIMESTAMP | Creación del registro |
+| updated_at | TIMESTAMP | Última modificación |
+
+Restricción única: `(ciudad_id, slug)`.
+Índice de consulta: `(ciudad_id, visible, orden)`.
+FK de ciudad: `ON DELETE RESTRICT`, `ON UPDATE CASCADE`.
+Orden público: tipo general primero, después `orden ASC`, `nombre ASC`, `id ASC`.
+Los tipos se validan en servidor contra una lista explícita; no hace falta
+un catálogo complejo de categorías para esta primera versión.
+
+Guardar cada contacto en las ciudades donde su cobertura esté verificada.
+No utilizar `ciudad_id = NULL` como alcance nacional implícito.
+
+## 68.5 Verificación y mantenimiento
+
+Permitir borradores ocultos sin fuente o fecha de verificación.
+Para publicar se requieren teléfono válido, fuente oficial y fecha de
+verificación no futura, además de ciudad activa y datos obligatorios.
+La consulta pública también debe excluir registros que no cumplan estas
+condiciones, aunque hayan sido editados mediante una herramienta técnica.
+
+El operador confirma la fuente y registra la revisión: no establecer
+`verificado_at` automáticamente como consecuencia de guardar o editar.
+Cambiar teléfono, extensión, institución, ciudad, descripción, horario o fuente
+invalida la verificación y oculta el contacto hasta una nueva revisión.
+Cambiar solo orden o visibilidad no cambia la fecha de verificación.
+
+No deducir teléfonos, horarios ni canales de WhatsApp. No cargar datos
+ficticios de emergencia mediante el seed público. Los datos de prueba deben
+quedar confinados a pruebas y sin capacidad de aparecer en producción.
+
+## 68.6 Llamada directa
+
+Crear un componente específico, por ejemplo `EmergencyContactCard.jsx`.
+El teléfono y el enlace deben estar presentes en el HTML de la página.
+
+Flujo:
+
+    Usuario pulsa Llamar
+        → enlace tel: con el teléfono publicado
+        → el dispositivo abre su marcador o aplicación compatible
+
+No usar `ContactButtons.jsx`, `/api/contactos` ni `registerContact` para
+Emergencias. No exigir precio, disponibilidad, token, sesión o una petición
+previa de analítica. No interceptar la navegación para esperar una respuesta.
+La web no afirma que el clic haya completado o conectado una llamada.
+
+Normalizar teléfonos ordinarios como números internacionales con `+` y
+entre 10 y 15 dígitos. Los números cortos se aceptan únicamente mediante
+una lista explícita por país verificada con fuentes oficiales; no anteponer
+código de país a esos números. No flexibilizar el validador comercial.
+Rechazar caracteres y esquemas arbitrarios; construir el prefijo `tel:`
+en la aplicación. Mostrar extensiones por separado, sin asumir que el
+dispositivo las marcará automáticamente.
+
+La primera versión incluye llamada. WhatsApp institucional queda para una
+ampliación posterior y solo si la institución publica oficialmente ese canal.
+
+## 68.7 Administración
+
+Añadir un apartado Emergencias al panel `/admin` existente:
+
+- seleccionar ciudad;
+- listar y crear contactos como borradores;
+- editar campos y registrar una verificación real;
+- publicar u ocultar;
+- modificar el orden de presentación.
+
+Reutilizar la protección administrativa existente y validar cada operación
+en servidor, incluidos IDs, ciudad, tipo, longitudes, teléfono y fuente URL
+HTTP/HTTPS. No crear registro público institucional, usuarios nuevos ni
+accesos mediante tokens de unidad. La primera versión permite ocultar;
+no necesita borrado definitivo desde la interfaz.
+
+## 68.8 Analítica
+
+La primera versión no requiere registrar clics ni visitas de Emergencias.
+No enviar sus llamadas a `log_contactos`, ni emitir impresiones o interacciones
+de proveedor para estas tarjetas. No reutilizar `VisitTracker` en esta página
+si sus eventos alimentan la conversión comercial sin distinguir el contexto.
+Las visitas a la landing comercial conservan su comportamiento actual.
+
+Una futura medición deberá separar accesos y clics de emergencia de la
+conversión comercial. Un clic representa un intento de contacto; nunca una
+llamada atendida, incidente resuelto o servicio realizado. Esa ampliación
+requerirá actualizar esquema y especificación; no sobrecargar eventos
+comerciales existentes. Cualquier fallo analítico debe dejar intacto el enlace.
+
+## 68.9 Integración y límites de la implementación
+
+Puntos de integración previstos:
+
+- `src/db/schema.js` y migración nueva: tabla independiente.
+- Consulta pública propia: ciudad activa y contactos publicables.
+- `src/app/[ciudad]/emergencias/page.js`: página y metadata por ciudad.
+- Componente de tarjetas: teléfono visible y enlace directo.
+- `BottomNavigation` y landing: accesos con contexto de ciudad.
+- Panel y operaciones administrativas: gestión protegida.
+
+Mantener la consulta de Emergencias independiente de
+`getPublicServicesByCity`: no calcular precios ni cargar unidades para
+mostrar este directorio. No incluir instituciones en los contadores,
+resultados, datos estructurados comerciales o rankings de Mandados.
+
+La publicación de la especificación no ejecuta migraciones, carga teléfonos,
+modifica el código de la aplicación ni despliega la funcionalidad.
+La implementación no requiere dependencias ni variables de entorno nuevas.
+
+## 68.10 Criterios de aceptación
+
+1. Los dos accesos llevan a Emergencias conservando la ciudad y permanecen
+   utilizables al filtrar categorías o cuando no hay repartidores disponibles.
+2. La navegación funciona desde rutas anidadas en móvil y escritorio.
+3. Cada ciudad muestra solo sus contactos publicables; ciudades inexistentes
+   o inactivas muestran no encontrado.
+4. La sección vacía conserva su acceso y no publica teléfonos ficticios.
+   Un fallo de consulta se distingue del estado vacío.
+5. Las tarjetas muestran teléfono, institución, ubicación, fuente y fecha
+   de revisión, sin precios ni disponibilidad comercial.
+6. Llamar utiliza un enlace `tel:` disponible sin JavaScript una vez cargada
+   la página, sin petición previa a `/api/contactos` ni dependencia de analítica.
+7. La validación admite números ordinarios y números cortos autorizados para
+   el país, rechaza entradas inválidas y conserva las extensiones visibles.
+8. El operador puede crear, editar, verificar, publicar, ocultar y ordenar
+   contactos; las operaciones sin credencial válida son rechazadas en servidor.
+9. No se puede publicar sin fuente y verificación; una modificación de datos
+   que requiere revisión oculta el contacto e invalida la verificación anterior.
+10. La migración añade la tabla, restricciones e índices sin modificar ni
+    eliminar datos de servicios, unidades o contactos comerciales existentes.
+11. Mandados conserva precios, disponibilidad, ordenamiento, contactos y
+    métricas; `/u/[token]` y la administración existente siguen funcionando.
+12. Se comprueban validaciones, aislamiento por ciudad y autorización con
+    pruebas pertinentes; lint y build pasan al implementar la funcionalidad.

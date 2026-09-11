@@ -35,9 +35,16 @@ export default async function sitemap() {
       changeFrequency: "daily",
       priority: 1,
     }));
+  const emergencyEntries = cities.map((city) => ({
+    url: absoluteUrl(`/${city.slug}/emergencias`),
+    lastModified: city.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
 
   return [
     ...cityEntries,
+    ...emergencyEntries,
     ...stablePublicPages.map(([path, date, changeFrequency, priority]) => ({
       url: absoluteUrl(path),
       lastModified: new Date(`${date}T00:00:00-06:00`),

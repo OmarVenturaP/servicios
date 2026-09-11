@@ -2,9 +2,10 @@ export const siteConfig = {
   name: "Servicios",
   seoName: "Somos Servicios",
   url: "https://somosservicios.com",
+  pilotCitySlug: "tonala",
   tagline: "Gente local para tu día a día",
   brandMessage: "Conecta tu día a día",
-  description: "Encuentra servicios locales disponibles, compara precios desde y contacta directamente con prestadores en tu ciudad.",
+  description: "Encuentra información de servicios en tu zona, compara opciones locales y contacta directamente con prestadores disponibles en tu ciudad.",
   contactEmail: "somosserviciosmx@gmail.com",
   legalEmail: "somosserviciosmx@gmail.com",
   privacyEmail: "somosserviciosmx@gmail.com",
@@ -20,7 +21,7 @@ export const siteConfig = {
   legalUpdatedAt: "7 de septiembre de 2026",
   assets: {
     horizontalLogo: "/brand/logo-horizontal.png",
-    icon: "/brand/isotipo.png",
+    icon: "/brand/isotipo-v2.png",
     socialImage: "/brand/og-image.png",
   },
   legalLinks: [

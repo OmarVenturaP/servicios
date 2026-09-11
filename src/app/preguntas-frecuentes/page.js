@@ -84,26 +84,25 @@ export default function FrequentlyAskedQuestionsPage() {
       <LegalPageLayout title="Preguntas frecuentes" eyebrow="Conoce Servicios" showUpdatedAt={false}>
         <p>Encuentra respuestas rápidas sobre el funcionamiento de la plataforma, la disponibilidad y el contacto con prestadores.</p>
 
-      <div className="mt-7 space-y-3">
-        {questions.map(({ question, answer }, index) => (
-          <details key={question} className="group rounded-2xl border border-slate-200 bg-slate-50 open:border-[color:color-mix(in_srgb,var(--brand-blue)_22%,white)] open:bg-[color:color-mix(in_srgb,var(--brand-blue)_4%,white)]">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 font-semibold text-[var(--brand-navy)] marker:content-none">
-              <span><BrandText>{question}</BrandText></span>
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-[var(--brand-blue)] shadow-sm transition group-open:rotate-45" aria-hidden="true">+</span>
-            </summary>
-            <p className="px-4 pb-4 pr-12"><BrandText>{answer}</BrandText></p>
-            {index === questions.length - 1 ? (
-              <a href={pilotWhatsappUrl()} target="_blank" rel="noreferrer" className="brand-primary-action mx-4 mb-4 inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-bold shadow-sm">
-                Quiero publicar mi servicio
-              </a>
-            ) : null}
-          </details>
-        ))}
-      </div>
+        <div className="mt-7 space-y-3">
+          {questions.map(({ question, answer }, index) => (
+            <details key={question} className="group rounded-2xl border border-slate-200 bg-slate-50 open:border-[color:color-mix(in_srgb,var(--brand-blue)_22%,white)] open:bg-[color:color-mix(in_srgb,var(--brand-blue)_4%,white)]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 font-semibold text-[var(--brand-navy)] marker:content-none">
+                <span><BrandText>{question}</BrandText></span>
+                <span className="grid size-7 pb-1 shrink-0 place-items-center rounded-full bg-white text-[var(--brand-blue)] shadow-sm transition group-open:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <p className="px-4 pb-4 pr-12"><BrandText>{answer}</BrandText></p>
+              {index === questions.length - 1 ? (
+                <a href={pilotWhatsappUrl()} target="_blank" rel="noreferrer" className="brand-primary-action mx-4 mb-4 inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-bold shadow-sm">
+                  Quiero publicar mi servicio
+                </a>
+              ) : null}
+            </details>
+          ))}
+        </div>
 
         <div className="mt-8 rounded-2xl bg-slate-50 p-4 text-center">
-          <p>¿Quieres regresar a consultar los servicios disponibles?</p>
-          <Link href="/tonala" className="mt-2 inline-flex min-h-11 items-center rounded-xl px-4">Volver a <strong className="mx-1">Servicios</strong> en Tonalá</Link>
+          <Link href="/tonala" className="mt-2 inline-flex min-h-11 items-center rounded-xl px-4">Regresar a <strong className="mx-1">Servicios</strong></Link>
         </div>
       </LegalPageLayout>
     </>

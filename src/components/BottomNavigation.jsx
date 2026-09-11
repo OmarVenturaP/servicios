@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Home, Menu, Search, X } from "lucide-react";
+import { Home, Menu, Search, Siren, X } from "lucide-react";
 import { pilotWhatsappUrl, siteConfig } from "@/config/site";
 
 export default function BottomNavigation() {
@@ -12,7 +12,13 @@ export default function BottomNavigation() {
   const triggerRef = useRef(null);
   const pathname = usePathname();
 
-  const isCityPage = pathname && pathname.split("/").length === 2 && !["admin", "aviso-privacidad", "terminos-condiciones", "preguntas-frecuentes", "u"].includes(pathname.split("/")[1]);
+  const segments = pathname?.split("/").filter(Boolean) ?? [];
+  const reservedSegments = ["admin", "aviso-privacidad", "terminos-condiciones", "preguntas-frecuentes", "u"];
+  const hasCityContext = segments.length > 0 && !reservedSegments.includes(segments[0]);
+  const citySlug = hasCityContext ? segments[0] : siteConfig.pilotCitySlug;
+  const cityHref = `/${citySlug}`;
+  const isCityLanding = hasCityContext && segments.length === 1;
+  const isEmergencies = hasCityContext && segments[1] === "emergencias";
 
   useEffect(() => {
     if (!open) return;
@@ -65,7 +71,7 @@ export default function BottomNavigation() {
               </button>
             </div>
             <nav className="mt-2 grid gap-1" aria-label="Más información">
-              {isCityPage ? (
+              {isCityLanding ? (
                 <a href="#como-funciona" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                   ¿Cómo funciona?
                 </a>
@@ -92,25 +98,28 @@ export default function BottomNavigation() {
 
       <div className="h-[calc(4.2rem+env(safe-area-inset-bottom))]" aria-hidden="true" />
       <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200 bg-white/95 px-7 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-5px_18px_rgba(15,23,42,0.06)] backdrop-blur" aria-label="Navegación principal">
-        <div className="grid grid-cols-3">
-          {isCityPage ? (
+        <div className="grid grid-cols-4">
+          {isCityLanding ? (
             <a href="#inicio" className="flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold text-[var(--brand-blue)]">
               <Home aria-hidden="true" size={20} fill="currentColor" /> Inicio
             </a>
           ) : (
-            <Link href="/" className="flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold text-[var(--brand-blue)]">
+            <Link href={cityHref} className={`flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold ${isEmergencies ? "text-slate-500" : "text-[var(--brand-blue)]"}`}>
               <Home aria-hidden="true" size={20} fill="currentColor" /> Inicio
             </Link>
           )}
-          {isCityPage ? (
+          {isCityLanding ? (
             <a href="#categorias" className="flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold text-slate-500">
               <Search aria-hidden="true" size={20} /> Buscar
             </a>
           ) : (
-            <Link href="/#categorias" className="flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold text-slate-500">
+            <Link href={`${cityHref}#categorias`} className="flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold text-slate-500">
               <Search aria-hidden="true" size={20} /> Buscar
             </Link>
           )}
+          <Link href={`${cityHref}/emergencias`} aria-current={isEmergencies ? "page" : undefined} className={`flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold text-red-600`}>
+            <Siren aria-hidden="true" size={20} /> Emergencias
+          </Link>
           <button ref={triggerRef} type="button" onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="more-menu-dialog" className={`flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.6rem] font-bold ${open ? "text-[var(--brand-blue)]" : "text-slate-500"}`}>
             <Menu aria-hidden="true" size={20} /> Más
           </button>

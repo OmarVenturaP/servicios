@@ -17,23 +17,23 @@ export function isRealPublicService(service) {
 export function isIndexableCity(city, services = []) {
   return Boolean(
     city
-      && publishedCitySlugs.has(city.slug)
-      && services.some(isRealPublicService),
+    && publishedCitySlugs.has(city.slug)
+    && services.some(isRealPublicService),
   );
 }
 
 export function isIndexableCategory(city, category, services = []) {
   return Boolean(
     isIndexableCity(city, services)
-      && category?.published
-      && category?.indexable,
+    && category?.published
+    && category?.indexable,
   );
 }
 
 export function generateCityMetadata(city, services = []) {
   const location = cityDisplayName(city);
-  const title = `Servicios y Mandados en ${city.name}, ${city.state} | ${siteConfig.seoName}`;
-  const description = `Encuentra mandaditos, motomandados y servicios locales en ${location}. Consulta disponibilidad, cobertura y precios de referencia y contacta directamente al proveedor.`;
+  const title = `Servicios en ${city.name}, ${city.state} | ${siteConfig.seoName}`;
+  const description = `Encuentra información de servicios locales en ${location}. Compara opciones, disponibilidad, cobertura y precios base antes de contactar directamente.`;
   const url = absoluteUrl(`/${city.slug}`);
   const indexable = isIndexableCity(city, services);
   const image = {
@@ -46,6 +46,14 @@ export function generateCityMetadata(city, services = []) {
   return {
     title: { absolute: title },
     description,
+    keywords: [
+      `servicios en ${city.name}`,
+      `servicios ${city.name}`,
+      `servicios locales en ${city.name}`,
+      `proveedores en ${city.name}`,
+      `mandados en ${city.name}`,
+      `${city.name} ${city.state}`,
+    ],
     alternates: { canonical: url },
     robots: { index: indexable, follow: indexable },
     openGraph: {

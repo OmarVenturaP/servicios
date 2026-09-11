@@ -12,13 +12,13 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.seoName} | ${siteConfig.tagline}`,
+    default: `Servicios locales cerca de ti | ${siteConfig.seoName}`,
     template: `%s | ${siteConfig.seoName}`,
   },
   description: siteConfig.description,
   applicationName: siteConfig.seoName,
   category: "servicios locales",
-  keywords: ["servicios locales", "prestadores de servicios", "mandados", "Somos Servicios"],
+  keywords: ["servicios locales", "servicios en tu zona", "prestadores de servicios", "mandados", "Somos Servicios"],
   authors: [{ name: siteConfig.creator.name, url: siteConfig.creator.url }],
   creator: siteConfig.creator.name,
   publisher: siteConfig.seoName,
@@ -37,14 +37,15 @@ export const metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/brand/favicon-64.png", sizes: "64x64", type: "image/png" },
-      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/brand/favicon-64-v2.png", sizes: "64x64", type: "image/png" },
+      { url: "/brand/favicon-48-v2.png", sizes: "48x48", type: "image/png" },
+      { url: "/brand/favicon-32-v2.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-16-v2.png", sizes: "16x16", type: "image/png" },
     ],
-    apple: [{ url: "/brand/apple-touch-icon-v3.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/brand/apple-touch-icon-v5.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: `${siteConfig.seoName} | ${siteConfig.tagline}`,
+    title: `Servicios locales cerca de ti | ${siteConfig.seoName}`,
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.seoName,
@@ -54,7 +55,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.seoName} | ${siteConfig.tagline}`,
+    title: `Servicios locales cerca de ti | ${siteConfig.seoName}`,
     description: siteConfig.description,
     images: [siteConfig.assets.socialImage],
   },

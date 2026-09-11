@@ -50,7 +50,7 @@ export default async function CityPage({ params }) {
         "@id": `${cityUrl}#webpage`,
         url: cityUrl,
         name: `Servicios locales en ${location}`,
-        description: `Directorio para encontrar mandaditos, motomandados y servicios locales en ${location}.`,
+        description: `Directorio para encontrar información, comparar opciones y contactar servicios locales en ${location}.`,
         inLanguage: "es-MX",
         isPartOf: { "@id": `${siteConfig.url}/#website` },
         about: { "@type": "Place", name: location },
@@ -87,7 +87,7 @@ export default async function CityPage({ params }) {
         <section className="hero-reference relative h-[16.2rem] overflow-hidden">
           <Header href="#inicio" />
           <h1 className="relative z-10 px-6 text-xs font-semibold text-slate-700">
-            Servicios locales en {city.name}, {city.state}
+            Servicios en {city.name}, {city.state}
           </h1>
           <p className="relative z-10 px-6 text-xs font-semibold text-slate-700">
             {siteConfig.tagline}
@@ -97,7 +97,7 @@ export default async function CityPage({ params }) {
               ¿Necesitas<br />un servicio?
             </p>
             <p className="mt-3 text-[0.82rem] font-medium leading-[1.5] text-[var(--brand-navy)]">
-              Conecta con proveedores disponibles en {city.name}.
+              Encuentra, compara y contacta proveedores locales en {city.name}.
             </p>
           </div>
           <Image

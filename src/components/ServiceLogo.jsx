@@ -8,14 +8,14 @@ export default function ServiceLogo({ logoUrl, serviceName, available }) {
   const [failed, setFailed] = useState(false);
 
   return (
-    <div className={`relative grid size-[4.15rem] shrink-0 place-items-center overflow-hidden rounded-full ${available ? "bg-slate-950" : "bg-slate-300"}`}>
+    <div className={`relative grid aspect-square size-[4.15rem] shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-200 ${available ? "bg-slate-950" : "bg-slate-300"}`}>
       {logoUrl && !failed ? (
         <Image
           src={logoUrl}
           alt={`Logo de ${serviceName}`}
           fill
           sizes="67px"
-          className="bg-white object-contain p-1.5"
+          className="bg-white object-cover"
           onError={() => setFailed(true)}
         />
       ) : (
