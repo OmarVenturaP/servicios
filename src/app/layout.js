@@ -2,6 +2,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import BottomNavigation from "@/components/BottomNavigation";
 import { siteConfig } from "@/config/site";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -99,6 +100,7 @@ export default function RootLayout({ children }) {
         />
         {children}
         <BottomNavigation />
+        <SpeedInsights />
       </body>
     </html>
   );
