@@ -2694,15 +2694,17 @@ Reglas:
 1. Los servicios con al menos una unidad efectivamente disponible
    aparecen antes que los servicios sin disponibilidad.
 
-2. Entre los servicios disponibles, priorizar aquellos con mayor
-   cantidad de unidades efectivamente disponibles.
+2. Entre los servicios disponibles, la priorización por mayor cantidad
+   de unidades efectivamente disponibles queda desactivada manualmente
+   durante el piloto para dar oportunidad rotativa a todos los
+   proveedores publicados.
 
-3. Como siguiente criterio, priorizar la disponibilidad actualizada más
-   recientemente.
+3. La priorización por disponibilidad actualizada más recientemente
+   queda pendiente para una iteración posterior.
 
-4. En condiciones equivalentes puede utilizarse el mecanismo de
-   rotación/desempate existente para evitar favorecer permanentemente
-   al mismo servicio.
+4. Mientras estos criterios estén desactivados, utilizar una rotación
+   aleatoria sencilla entre servicios disponibles para evitar favorecer
+   permanentemente al mismo servicio.
 
 5. Los servicios sin disponibilidad efectiva aparecerán después de los
    servicios disponibles cuando la landing decida mantenerlos visibles.
