@@ -6,10 +6,12 @@ import mysql from "mysql2/promise";
 import { getMySqlConnectionOptions } from "../src/db/connection.js";
 import {
   catCiudades,
+  catCategorias,
   catEstadosUnidad,
   catModosContacto,
   datServicios,
   datUnidades,
+  relServiciosCategorias,
 } from "../src/db/schema.js";
 
 const DEV_SOURCE = "seed_desarrollo";
@@ -23,6 +25,17 @@ const estadoCatalogo = [
 const modoContactoCatalogo = [
   { clave: "central", nombre: "Contacto central" },
   { clave: "unidad", nombre: "Contacto por unidad" },
+];
+
+const categoriaCatalogo = [
+  { nombre: "Mandados", slug: "mandados", icono: "bike", requiereUnidades: true },
+  { nombre: "A/C", slug: "aire-acondicionado", icono: "snowflake", requiereUnidades: false },
+  { nombre: "CCTV", slug: "cctv", icono: "cctv", requiereUnidades: false },
+  { nombre: "Mecánicos", slug: "mecanicos", icono: "wrench", requiereUnidades: false },
+  { nombre: "Electricistas", slug: "electricistas", icono: "plug", requiereUnidades: false },
+  { nombre: "Plomería", slug: "plomeria", icono: "droplet", requiereUnidades: false },
+  { nombre: "Fletes", slug: "fletes", icono: "package", requiereUnidades: false },
+  { nombre: "Limpieza", slug: "limpieza", icono: "sparkles", requiereUnidades: false },
 ];
 
 const serviciosDesarrollo = [
@@ -135,6 +148,11 @@ async function seed() {
       .values(modoContactoCatalogo.map((modo) => ({ ...modo, activo: true })))
       .onDuplicateKeyUpdate({ set: { activo: true } });
 
+    await db
+      .insert(catCategorias)
+      .values(categoriaCatalogo.map((categoria) => ({ ...categoria, activo: true })))
+      .onDuplicateKeyUpdate({ set: { activo: true } });
+
     const [ciudad] = await db
       .select({ id: catCiudades.id })
       .from(catCiudades)
@@ -146,9 +164,13 @@ async function seed() {
     const modos = await db
       .select({ id: catModosContacto.id, clave: catModosContacto.clave })
       .from(catModosContacto);
+    const categorias = await db
+      .select({ id: catCategorias.id, slug: catCategorias.slug })
+      .from(catCategorias);
 
     const estadoId = Object.fromEntries(estados.map((estado) => [estado.clave, estado.id]));
     const modoId = Object.fromEntries(modos.map((modo) => [modo.clave, modo.id]));
+    const categoriaId = Object.fromEntries(categorias.map((categoria) => [categoria.slug, categoria.id]));
     const now = new Date();
 
     for (const [serviceIndex, service] of serviciosDesarrollo.entries()) {
@@ -157,6 +179,7 @@ async function seed() {
         .values({
           ciudadId: ciudad.id,
           modoContactoId: modoId[service.modoContacto],
+          categoriaId: categoriaId.mandados,
           nombre: service.nombre,
           slug: service.slug,
           telefono: service.telefono ?? null,
@@ -171,6 +194,7 @@ async function seed() {
         .onDuplicateKeyUpdate({
           set: {
             modoContactoId: modoId[service.modoContacto],
+            categoriaId: categoriaId.mandados,
             nombre: service.nombre,
             telefono: service.telefono ?? null,
             whatsapp: service.whatsapp ?? null,
@@ -188,6 +212,8 @@ async function seed() {
         .from(datServicios)
         .where(and(eq(datServicios.ciudadId, ciudad.id), eq(datServicios.slug, service.slug)))
         .limit(1);
+
+      await db.insert(relServiciosCategorias).values({ servicioId: savedService.id, categoriaId: categoriaId.mandados }).onDuplicateKeyUpdate({ set: { categoriaId: categoriaId.mandados } });
 
       for (const [unitIndex, unit] of service.unidades.entries()) {
         const contact = contactFor(serviceIndex, unitIndex);

@@ -401,3 +401,34 @@ Una tarea se considera técnicamente terminada cuando:
 
 La decisión final de realizar el commit pertenece al responsable del
 proyecto.
+
+---
+
+# 19. Registro obligatorio de funcionalidades futuras
+
+Toda nueva solicitud de funcionalidad o sugerencia técnica que no se lleve
+a la práctica debe guardarse en `docs/post-features.md`. Este es el único
+archivo de propuestas pendientes; no crear registros paralelos.
+
+La instrucción del usuario «guarda en features» activa este flujo:
+
+1. Leer el archivo y registrar la propuesta con fecha, título, objetivo
+   y alcance acordado. Conservar restricciones y dudas pendientes sin
+   inventar decisiones. Si ya existe, actualizar su entrada sin duplicarla.
+2. Modificar únicamente `docs/post-features.md` para guardar la propuesta.
+   No alterar `docs/MVP-SPEC.md`, otras SPEC, código, configuración,
+   dependencias o migraciones. Guardar una idea no autoriza implementarla
+   ni la convierte en alcance aprobado de la especificación.
+3. Confirmar brevemente qué propuesta quedó guardada.
+4. Cuando el usuario solicite implementarla, consultar su entrada y seguir
+   el flujo de implementación y actualización documental correspondiente.
+5. Eliminar la entrada solo después de incorporar y validar efectivamente
+   la funcionalidad en el sistema. No retirarla por haberla planificado,
+   aprobado, agregado a la SPEC o iniciado su desarrollo. Si la incorporación
+   es parcial, conservar y actualizar el alcance pendiente.
+
+Aplicar también este registro a las nuevas propuestas que queden para
+después durante otra tarea, sin ampliar la implementación solicitada.
+Esta regla no migra ni elimina retroactivamente contenido de las SPEC
+ya existentes. El registro contiene pendientes, no un historial de
+funcionalidades terminadas.

@@ -1,9 +1,11 @@
 import { and, asc, count, eq, max } from "drizzle-orm";
 import { getDb } from "@/db";
+import { activeServiceCategoryCondition } from "@/db/category-visibility";
 import { effectiveAvailableCondition, getTimeZoneOffsetMinutes } from "@/db/availability";
 import { normalizeAttribution, normalizeResultPosition } from "@/lib/analytics-context";
 import {
   catCiudades,
+  catCategorias,
   catEstadosUnidad,
   catModosContacto,
   datServicios,
@@ -37,17 +39,21 @@ function normalizedPhone(value) {
   return /^\d{10,15}$/.test(phone) ? phone : null;
 }
 
-function contactUrl({ channel, cityName, phone, priceShown }) {
+function contactUrl({ channel, cityName, phone, priceShown, serviceName, requiresUnits }) {
   if (channel === "llamada") {
     return `tel:${phone}`;
   }
 
-  const message = [
+  const message = requiresUnits ? [
     `Hola, te encontré en Servicios ${cityName}.`,
     "",
     `Vi que tu servicio tiene un precio desde $${Number(priceShown).toLocaleString("es-MX", { maximumFractionDigits: 2 })}.`,
     "",
     "¿Tienes disponibilidad para realizar un mandado?",
+  ].join("\n") : [
+    `Hola, te encontré en Servicios ${cityName}.`,
+    "",
+    `Me interesa el servicio de ${serviceName}. ¿Podrías darme información?`,
   ].join("\n");
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -69,10 +75,6 @@ export async function registerContact({
 
   const clientPrice = normalizedPrice(priceShown);
 
-  if (clientPrice === null) {
-    throw new ContactError("invalid_price", "Precio mostrado inválido");
-  }
-
   return getDb().transaction(async (tx) => {
     const [service] = await tx
       .select({
@@ -82,17 +84,23 @@ export async function registerContact({
         contactMode: catModosContacto.clave,
         phone: datServicios.telefono,
         whatsapp: datServicios.whatsapp,
+        serviceName: datServicios.nombre,
         timeZone: catCiudades.zonaHoraria,
+        categoryName: catCategorias.nombre,
+        requiresUnits: catCategorias.requiereUnidades,
+        operationMode: datServicios.modoOperacion,
       })
       .from(datServicios)
       .innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId))
       .innerJoin(catModosContacto, eq(catModosContacto.id, datServicios.modoContactoId))
+      .innerJoin(catCategorias, eq(catCategorias.id, datServicios.categoriaId))
       .where(
         and(
           eq(catCiudades.slug, citySlug),
           eq(catCiudades.activo, true),
           eq(datServicios.slug, serviceSlug),
           eq(datServicios.visible, true),
+          activeServiceCategoryCondition(tx),
           eq(catModosContacto.activo, true),
         ),
       )
@@ -102,6 +110,30 @@ export async function registerContact({
       throw new ContactError("service_not_found", "Servicio o ciudad no encontrados", 404);
     }
 
+    if (service.operationMode === "servicio") {
+      if (service.contactMode !== "central") throw new ContactError("invalid_contact_mode", "Esta categoría requiere contacto central.", 409);
+      const phone = normalizedPhone(channel === "whatsapp" ? service.whatsapp : service.phone);
+      if (!phone) throw new ContactError("invalid_phone", "El servicio no tiene un número válido", 409);
+      const context = normalizeAttribution(attribution);
+      await tx.insert(logContactos).values({
+        servicioId: service.id,
+        unidadId: null,
+        ciudadId: service.cityId,
+        sessionId,
+        canal: channel,
+        precioMostrado: null,
+        resultPosition: normalizeResultPosition(resultPosition),
+        tipoTrafico: trafficType,
+        origen: context.origin,
+        utmSource: context.utmSource,
+        utmMedium: context.utmMedium,
+        utmCampaign: context.utmCampaign,
+        utmContent: context.utmContent,
+      });
+      return { url: contactUrl({ channel, cityName: service.cityName, phone, priceShown: null, serviceName: service.serviceName, requiresUnits: false }) };
+    }
+
+    if (clientPrice === null) throw new ContactError("invalid_price", "Precio mostrado inválido");
     const effectiveAvailability = effectiveAvailableCondition({ timeZoneOffsetMinutes: getTimeZoneOffsetMinutes(service.timeZone) });
 
     const contactCount = count(logContactos.id);
@@ -199,6 +231,8 @@ export async function registerContact({
         cityName: service.cityName,
         phone,
         priceShown: serverPrice,
+        serviceName: service.serviceName,
+        requiresUnits: true,
       }),
     };
   });

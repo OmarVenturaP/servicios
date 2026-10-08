@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   Zap,
 } from "lucide-react";
+import { getPublicAds } from "@/services/advertisements";
 import Header from "@/components/Header";
 import HowItWorks from "@/components/HowItWorks";
 import LandingExperience from "@/components/LandingExperience";
@@ -34,7 +35,8 @@ export default async function CityPage({ params }) {
     notFound();
   }
 
-  const { city, services, totals } = availability;
+  const { city, services, totals, categories } = availability;
+  const ads = await getPublicAds(city.id);
   const cityUrl = absoluteUrl(`/${city.slug}`);
   const realServices = services.filter(isRealPublicService);
   const publicServices = services.map(({ source, ...service }) => ({
@@ -124,7 +126,7 @@ export default async function CityPage({ params }) {
             ))}
           </section>
 
-          <LandingExperience citySlug={city.slug} cityName={city.name} services={publicServices} totals={totals} />
+          <LandingExperience citySlug={city.slug} cityName={city.name} services={publicServices} totals={totals} ads={ads} categories={categories} />
         </main>
 
         <HowItWorks />

@@ -3,10 +3,12 @@ import {
   boolean,
   char,
   decimal,
+  date,
   index,
   int,
   mysqlEnum,
   mysqlTable,
+  primaryKey,
   time,
   tinyint,
   text,
@@ -29,6 +31,24 @@ export const catCiudades = mysqlTable(
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
   },
   (table) => [uniqueIndex("uq_cat_ciudades_slug").on(table.slug)],
+);
+
+export const datAnuncios = mysqlTable(
+  "dat_anuncios",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ciudadId: int("ciudad_id").notNull().references(() => catCiudades.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    titulo: varchar("titulo", { length: 160 }).notNull(),
+    imagenUrl: varchar("imagen_url", { length: 2048 }).notNull(),
+    destinoUrl: varchar("destino_url", { length: 2048 }).notNull(),
+    orden: int("orden").default(0).notNull(),
+    activo: boolean("activo").default(false).notNull(),
+    fechaInicio: date("fecha_inicio", { mode: "string" }),
+    fechaFin: date("fecha_fin", { mode: "string" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [index("idx_anuncios_ciudad_activo_orden").on(table.ciudadId, table.activo, table.orden)],
 );
 
 export const catEstadosUnidad = mysqlTable(
@@ -55,6 +75,21 @@ export const catModosContacto = mysqlTable(
   (table) => [uniqueIndex("uq_cat_modos_contacto_clave").on(table.clave)],
 );
 
+export const catCategorias = mysqlTable(
+  "cat_categorias",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    nombre: varchar("nombre", { length: 120 }).notNull(),
+    slug: varchar("slug", { length: 120 }).notNull(),
+    icono: varchar("icono", { length: 40 }).notNull(),
+    requiereUnidades: boolean("requiere_unidades").default(false).notNull(),
+    activo: boolean("activo").default(true).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [uniqueIndex("uq_cat_categorias_slug").on(table.slug)],
+);
+
 export const datServicios = mysqlTable(
   "dat_servicios",
   {
@@ -65,13 +100,22 @@ export const datServicios = mysqlTable(
     modoContactoId: int("modo_contacto_id")
       .notNull()
       .references(() => catModosContacto.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    categoriaId: int("categoria_id")
+      .notNull()
+      .references(() => catCategorias.id, { onDelete: "restrict", onUpdate: "cascade" }),
     nombre: varchar("nombre", { length: 160 }).notNull(),
     slug: varchar("slug", { length: 160 }).notNull(),
     telefono: varchar("telefono", { length: 30 }),
     whatsapp: varchar("whatsapp", { length: 30 }),
     descripcion: text("descripcion"),
+    informacionCorta: text("informacion_corta"),
+    informacionExtendida: text("informacion_extendida"),
+    modoOperacion: mysqlEnum("modo_operacion", ["unidades", "servicio"]).default("unidades").notNull(),
     coberturaTexto: text("cobertura_texto"),
     logoUrl: varchar("logo_url", { length: 500 }),
+    pagoEfectivo: boolean("pago_efectivo").default(false).notNull(),
+    pagoTarjeta: boolean("pago_tarjeta").default(false).notNull(),
+    pagoTransferencia: boolean("pago_transferencia").default(false).notNull(),
     visible: boolean("visible").default(true).notNull(),
     participaPiloto: boolean("participa_piloto").default(false).notNull(),
     fuente: varchar("fuente", { length: 80 }),
@@ -82,7 +126,25 @@ export const datServicios = mysqlTable(
   (table) => [
     uniqueIndex("uq_dat_servicios_ciudad_slug").on(table.ciudadId, table.slug),
     index("idx_dat_servicios_modo_contacto").on(table.modoContactoId),
+    index("idx_dat_servicios_categoria").on(table.ciudadId, table.categoriaId, table.visible),
     index("idx_dat_servicios_publicos").on(table.ciudadId, table.visible),
+  ],
+);
+
+export const relServiciosCategorias = mysqlTable(
+  "rel_servicios_categorias",
+  {
+    servicioId: int("servicio_id")
+      .notNull()
+      .references(() => datServicios.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    categoriaId: int("categoria_id")
+      .notNull()
+      .references(() => catCategorias.id, { onDelete: "restrict", onUpdate: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ name: "pk_rel_servicios_categorias", columns: [table.servicioId, table.categoriaId] }),
+    index("idx_rel_categorias_servicios").on(table.categoriaId, table.servicioId),
   ],
 );
 
@@ -166,6 +228,24 @@ export const datHorariosUnidad = mysqlTable(
   ],
 );
 
+export const datHorariosServicio = mysqlTable(
+  "dat_horarios_servicio",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    servicioId: int("servicio_id").notNull().references(() => datServicios.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    diaSemana: tinyint("dia_semana").notNull(),
+    bloque: tinyint("bloque").notNull(),
+    horaInicio: time("hora_inicio").notNull(),
+    horaFin: time("hora_fin").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_horario_servicio_dia_bloque").on(table.servicioId, table.diaSemana, table.bloque),
+    index("idx_horario_servicio_dia").on(table.servicioId, table.diaSemana),
+  ],
+);
+
 export const logEstadosUnidad = mysqlTable(
   "log_estados_unidad",
   {
@@ -223,7 +303,7 @@ export const logContactos = mysqlTable(
       .references(() => catCiudades.id, { onDelete: "restrict", onUpdate: "cascade" }),
     sessionId: varchar("session_id", { length: 36 }).notNull(),
     canal: mysqlEnum("canal", ["whatsapp", "llamada"]).notNull(),
-    precioMostrado: decimal("precio_mostrado", { precision: 10, scale: 2 }).notNull(),
+    precioMostrado: decimal("precio_mostrado", { precision: 10, scale: 2 }),
     resultPosition: int("result_position"),
     tipoTrafico: mysqlEnum("tipo_trafico", ["publico", "interno", "sin_clasificar"]),
     origen: varchar("origen", { length: 255 }),
@@ -290,6 +370,11 @@ export const catModosContactoRelations = relations(catModosContacto, ({ many }) 
   servicios: many(datServicios),
 }));
 
+export const catCategoriasRelations = relations(catCategorias, ({ many }) => ({
+  servicios: many(datServicios),
+  serviciosRelacionados: many(relServiciosCategorias),
+}));
+
 export const datServiciosRelations = relations(datServicios, ({ one, many }) => ({
   ciudad: one(catCiudades, {
     fields: [datServicios.ciudadId],
@@ -299,9 +384,20 @@ export const datServiciosRelations = relations(datServicios, ({ one, many }) => 
     fields: [datServicios.modoContactoId],
     references: [catModosContacto.id],
   }),
+  categoria: one(catCategorias, {
+    fields: [datServicios.categoriaId],
+    references: [catCategorias.id],
+  }),
   unidades: many(datUnidades),
+  horarios: many(datHorariosServicio),
+  categorias: many(relServiciosCategorias),
   contactos: many(logContactos),
   eventosAnalitica: many(logEventosAnalitica),
+}));
+
+export const relServiciosCategoriasRelations = relations(relServiciosCategorias, ({ one }) => ({
+  servicio: one(datServicios, { fields: [relServiciosCategorias.servicioId], references: [datServicios.id] }),
+  categoria: one(catCategorias, { fields: [relServiciosCategorias.categoriaId], references: [catCategorias.id] }),
 }));
 
 export const datUnidadesRelations = relations(datUnidades, ({ one, many }) => ({
@@ -320,6 +416,10 @@ export const datUnidadesRelations = relations(datUnidades, ({ one, many }) => ({
 
 export const datHorariosUnidadRelations = relations(datHorariosUnidad, ({ one }) => ({
   unidad: one(datUnidades, { fields: [datHorariosUnidad.unidadId], references: [datUnidades.id] }),
+}));
+
+export const datHorariosServicioRelations = relations(datHorariosServicio, ({ one }) => ({
+  servicio: one(datServicios, { fields: [datHorariosServicio.servicioId], references: [datServicios.id] }),
 }));
 
 export const logEstadosUnidadRelations = relations(logEstadosUnidad, ({ one }) => ({

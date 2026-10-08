@@ -1,17 +1,22 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, or } from "drizzle-orm";
 import { getDb } from "@/db";
 import { getEffectiveUnitStatus } from "@/db/availability";
 import {
   catCiudades,
+  catCategorias,
   catEstadosUnidad,
   catModosContacto,
   datServicios,
+  datHorariosServicio,
   datHorariosUnidad,
   datUnidades,
+  relServiciosCategorias,
 } from "@/db/schema";
 import { hashUnitToken } from "@/lib/unit-token";
 import { UnitPanelError, updateUnitStatusById } from "@/services/units";
+import { normalizeScheduleInput } from "@/domain/service-schedule";
+import { normalizeCategoryIds, retainedCategoryIds, validateCategorySelection } from "@/domain/service-categories";
 
 export class AdminError extends Error {
   constructor(code, message, status = 400) {
@@ -88,23 +93,34 @@ function safeUnit(row) {
 
 export async function getAdminSnapshot() {
   const db = getDb();
-  const [cities, contactModes, services, units, schedules] = await Promise.all([
+  const [cities, contactModes, categories, services, units, schedules, serviceSchedules, serviceCategories] = await Promise.all([
     db.select({ id: catCiudades.id, name: catCiudades.nombre, slug: catCiudades.slug, timeZone: catCiudades.zonaHoraria }).from(catCiudades).where(eq(catCiudades.activo, true)).orderBy(asc(catCiudades.nombre)),
     db.select({ id: catModosContacto.id, key: catModosContacto.clave, name: catModosContacto.nombre }).from(catModosContacto).where(eq(catModosContacto.activo, true)).orderBy(asc(catModosContacto.id)),
+    db.select({ id: catCategorias.id, name: catCategorias.nombre, slug: catCategorias.slug, requiresUnits: catCategorias.requiereUnidades }).from(catCategorias).where(eq(catCategorias.activo, true)).orderBy(asc(catCategorias.nombre)),
     db.select({
       id: datServicios.id,
       cityId: datServicios.ciudadId,
       cityName: catCiudades.nombre,
       contactModeId: datServicios.modoContactoId,
+      categoryId: datServicios.categoriaId,
+      categoryName: catCategorias.nombre,
+      categorySlug: catCategorias.slug,
+      requiresUnits: catCategorias.requiereUnidades,
       name: datServicios.nombre,
       slug: datServicios.slug,
       phone: datServicios.telefono,
       whatsapp: datServicios.whatsapp,
       description: datServicios.descripcion,
+      shortInformation: datServicios.informacionCorta,
+      extendedInformation: datServicios.informacionExtendida,
+      operationMode: datServicios.modoOperacion,
       coverage: datServicios.coberturaTexto,
       logoUrl: datServicios.logoUrl,
+      cashPayment: datServicios.pagoEfectivo,
+      cardPayment: datServicios.pagoTarjeta,
+      transferPayment: datServicios.pagoTransferencia,
       visible: datServicios.visible,
-    }).from(datServicios).innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId)).orderBy(asc(datServicios.nombre)),
+    }).from(datServicios).innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId)).innerJoin(catCategorias, eq(catCategorias.id, datServicios.categoriaId)).orderBy(asc(datServicios.nombre)),
     db.select({
       id: datUnidades.id,
       serviceId: datUnidades.servicioId,
@@ -122,6 +138,8 @@ export async function getAdminSnapshot() {
       timeZone: catCiudades.zonaHoraria,
     }).from(datUnidades).innerJoin(datServicios, eq(datServicios.id, datUnidades.servicioId)).innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId)).innerJoin(catEstadosUnidad, eq(catEstadosUnidad.id, datUnidades.estadoId)).orderBy(asc(datUnidades.id)),
     db.select({ unitId: datHorariosUnidad.unidadId, day: datHorariosUnidad.diaSemana, block: datHorariosUnidad.bloque, start: datHorariosUnidad.horaInicio, end: datHorariosUnidad.horaFin }).from(datHorariosUnidad).orderBy(asc(datHorariosUnidad.unidadId), asc(datHorariosUnidad.diaSemana), asc(datHorariosUnidad.bloque)),
+    db.select({ serviceId: datHorariosServicio.servicioId, day: datHorariosServicio.diaSemana, block: datHorariosServicio.bloque, start: datHorariosServicio.horaInicio, end: datHorariosServicio.horaFin }).from(datHorariosServicio).orderBy(asc(datHorariosServicio.servicioId), asc(datHorariosServicio.diaSemana), asc(datHorariosServicio.bloque)),
+    db.select({ serviceId: relServiciosCategorias.servicioId, categoryId: relServiciosCategorias.categoriaId, categoryName: catCategorias.nombre, categorySlug: catCategorias.slug }).from(relServiciosCategorias).innerJoin(catCategorias, eq(catCategorias.id, relServiciosCategorias.categoriaId)).orderBy(asc(relServiciosCategorias.servicioId), asc(catCategorias.nombre)),
   ]);
 
   const schedulesByUnit = new Map();
@@ -133,16 +151,38 @@ export async function getAdminSnapshot() {
     list.push(safeUnit({ ...unit, schedule: schedulesByUnit.get(unit.id) ?? [] }));
     unitsByService.set(unit.serviceId, list);
   }
+  const schedulesByService = new Map();
+  for (const item of serviceSchedules) schedulesByService.set(item.serviceId, [...(schedulesByService.get(item.serviceId) ?? []), item]);
+  const categoriesByService = new Map();
+  for (const item of serviceCategories) categoriesByService.set(item.serviceId, [...(categoriesByService.get(item.serviceId) ?? []), item]);
 
   return {
     cities,
     contactModes,
+    categories: categories.map((category) => ({ ...category, active: true, requiresUnits: Boolean(category.requiresUnits) })),
     services: services.map((service) => ({
       ...service,
       visible: Boolean(service.visible),
+      requiresUnits: service.operationMode === "unidades",
+      cashPayment: Boolean(service.cashPayment),
+      cardPayment: Boolean(service.cardPayment),
+      transferPayment: Boolean(service.transferPayment),
+      schedule: schedulesByService.get(service.id) ?? [],
+      categoryIds: (categoriesByService.get(service.id) ?? [{ categoryId: service.categoryId }]).map((category) => category.categoryId),
+      categoryNames: (categoriesByService.get(service.id) ?? [{ categoryName: service.categoryName }]).map((category) => category.categoryName),
+      categorySlugs: (categoriesByService.get(service.id) ?? [{ categorySlug: service.categorySlug }]).map((category) => category.categorySlug),
       units: unitsByService.get(service.id) ?? [],
     })),
   };
+}
+
+async function validatedCategories(tx, value) {
+  const ids = normalizeCategoryIds(value);
+  if (!ids.length) throw new AdminError("invalid_categories", "Selecciona al menos una categoría.");
+  const categories = await tx.select({ id: catCategorias.id, active: catCategorias.activo, requiresUnits: catCategorias.requiereUnidades }).from(catCategorias).where(inArray(catCategorias.id, ids));
+  const result = validateCategorySelection(ids, categories.map((category) => ({ ...category, active: Boolean(category.active), requiresUnits: Boolean(category.requiresUnits) })));
+  if (!result.valid) throw new AdminError("invalid_categories", result.error);
+  return result;
 }
 
 async function activeCatalogRecord(tx, table, id, label) {
@@ -162,9 +202,25 @@ function serviceValues(input) {
     name: text(input.name, { label: "Nombre del servicio", max: 160, required: true }),
     phone: phone(input.phone, "Teléfono del servicio"),
     whatsapp: phone(input.whatsapp, "WhatsApp del servicio"),
-    description: text(input.description, { label: "Descripción", max: 2000 }),
+    shortInformation: text(input.shortInformation, { label: "Información corta", max: 500 }),
+    extendedInformation: text(input.extendedInformation, { label: "Información extendida", max: 4000 }),
     coverage: text(input.coverage, { label: "Cobertura", max: 2000 }),
+    cashPayment: boolean(input.cashPayment, "Pago en efectivo"),
+    cardPayment: boolean(input.cardPayment, "Pago con tarjeta"),
+    transferPayment: boolean(input.transferPayment, "Pago por transferencia"),
   };
+}
+
+function serviceSchedule(value) {
+  let parsed;
+  try {
+    parsed = typeof value === "string" ? JSON.parse(value) : value;
+  } catch {
+    throw new AdminError("invalid_schedule", "El horario no es válido.");
+  }
+  const result = normalizeScheduleInput(parsed ?? []);
+  if (!result.valid) throw new AdminError("invalid_schedule", result.error);
+  return result.schedule;
 }
 
 function unitValues(input) {
@@ -183,26 +239,41 @@ function duplicateError(error) {
 export async function createProvider(input) {
   const cityId = requiredId(input.cityId, "Ciudad");
   const contactModeId = requiredId(input.contactModeId, "Modo de contacto");
+  const categoryIds = normalizeCategoryIds(input.categoryIds);
   const service = serviceValues(input.service ?? {});
-  const unit = unitValues(input.unit ?? {});
+  const schedule = serviceSchedule(input.service?.schedule ?? []);
 
   try {
     return await getDb().transaction(async (tx) => {
       await activeCatalogRecord(tx, catCiudades, cityId, "La ciudad");
-      await activeCatalogRecord(tx, catModosContacto, contactModeId, "El modo de contacto");
-      const state = await unavailableState(tx);
+      const [contactMode] = await tx.select({ key: catModosContacto.clave }).from(catModosContacto).where(and(eq(catModosContacto.id, contactModeId), eq(catModosContacto.activo, true))).limit(1);
+      if (!contactMode) throw new AdminError("invalid_relation", "El modo de contacto no existe o está inactivo.");
+      const categorySelection = await validatedCategories(tx, categoryIds);
+      if (!categorySelection.requiresUnits && contactMode.key !== "central") throw new AdminError("invalid_contact_mode", "Los servicios sin unidades requieren contacto central.");
       const [createdService] = await tx.insert(datServicios).values({
         ciudadId: cityId,
         modoContactoId: contactModeId,
+        categoriaId: categorySelection.ids[0],
         nombre: service.name,
         slug: slugify(service.name),
         telefono: service.phone,
         whatsapp: service.whatsapp,
-        descripcion: service.description,
+        descripcion: service.extendedInformation,
+        informacionCorta: service.shortInformation,
+        informacionExtendida: service.extendedInformation,
+        modoOperacion: categorySelection.requiresUnits ? "unidades" : "servicio",
         coberturaTexto: service.coverage,
+        pagoEfectivo: service.cashPayment,
+        pagoTarjeta: service.cardPayment,
+        pagoTransferencia: service.transferPayment,
         visible: true,
       });
       const serviceId = Number(createdService.insertId);
+      await tx.insert(relServiciosCategorias).values(categorySelection.ids.map((categoriaId) => ({ servicioId: serviceId, categoriaId })));
+      if (!categorySelection.requiresUnits && schedule.length) await tx.insert(datHorariosServicio).values(schedule.map((item) => ({ servicioId: serviceId, diaSemana: item.day, bloque: item.block, horaInicio: item.start, horaFin: item.end })));
+      if (!categorySelection.requiresUnits) return serviceId;
+      const unit = unitValues(input.unit ?? {});
+      const state = await unavailableState(tx);
       await tx.insert(datUnidades).values({
         servicioId: serviceId,
         nombre: unit.name,
@@ -226,26 +297,68 @@ export async function createProvider(input) {
 export async function updateService(serviceIdValue, input) {
   const serviceId = requiredId(serviceIdValue, "Servicio");
   const contactModeId = requiredId(input.contactModeId, "Modo de contacto");
+  const categoryIds = normalizeCategoryIds(input.categoryIds);
   const values = serviceValues(input);
-  await activeCatalogRecord(getDb(), catModosContacto, contactModeId, "El modo de contacto");
-  const result = await getDb().update(datServicios).set({
-    modoContactoId: contactModeId,
-    nombre: values.name,
-    telefono: values.phone,
-    whatsapp: values.whatsapp,
-    descripcion: values.description,
-    coberturaTexto: values.coverage,
-    visible: boolean(input.visible, "Visibilidad"),
-  }).where(eq(datServicios.id, serviceId));
-  if (!result[0].affectedRows) throw new AdminError("service_not_found", "El servicio no existe.", 404);
+  const schedule = serviceSchedule(input.schedule ?? []);
+  await getDb().transaction(async (tx) => {
+    const [currentService] = await tx
+      .select({ operationMode: datServicios.modoOperacion, categoryId: datServicios.categoriaId })
+      .from(datServicios)
+      .where(eq(datServicios.id, serviceId))
+      .limit(1);
+    if (!currentService) throw new AdminError("service_not_found", "El servicio no existe.", 404);
+    const [contactMode] = await tx.select({ key: catModosContacto.clave }).from(catModosContacto).where(and(eq(catModosContacto.id, contactModeId), eq(catModosContacto.activo, true))).limit(1);
+    if (!contactMode) throw new AdminError("invalid_relation", "El modo de contacto no existe o está inactivo.");
+    const inactiveCategories = await tx.select({ id: catCategorias.id }).from(catCategorias).where(and(
+      eq(catCategorias.activo, false),
+      or(eq(catCategorias.id, currentService.categoryId), inArray(catCategorias.id,
+        tx.select({ id: relServiciosCategorias.categoriaId }).from(relServiciosCategorias).where(eq(relServiciosCategorias.servicioId, serviceId)))),
+    ));
+    const inactiveIds = inactiveCategories.map((category) => category.id);
+    const categorySelection = categoryIds.length || !inactiveIds.length
+      ? await validatedCategories(tx, categoryIds)
+      : { ids: [], requiresUnits: currentService.operationMode === "unidades" };
+    const savedCategoryIds = retainedCategoryIds(categorySelection.ids, inactiveIds);
+    const nextOperationMode = categorySelection.requiresUnits ? "unidades" : "servicio";
+    if (currentService.operationMode !== nextOperationMode) {
+      throw new AdminError(
+        "operation_mode_change_not_allowed",
+        "Las categorías seleccionadas no son compatibles con el modo operativo actual del servicio.",
+        409,
+      );
+    }
+    if (!categorySelection.requiresUnits && contactMode.key !== "central") throw new AdminError("invalid_contact_mode", "Los servicios sin unidades requieren contacto central.");
+    const result = await tx.update(datServicios).set({
+      modoContactoId: contactModeId,
+      categoriaId: categorySelection.ids[0] ?? (inactiveIds.includes(currentService.categoryId) ? currentService.categoryId : inactiveIds[0]),
+      nombre: values.name,
+      telefono: values.phone,
+      whatsapp: values.whatsapp,
+      descripcion: values.extendedInformation,
+      informacionCorta: values.shortInformation,
+      informacionExtendida: values.extendedInformation,
+      modoOperacion: nextOperationMode,
+      coberturaTexto: values.coverage,
+      pagoEfectivo: values.cashPayment,
+      pagoTarjeta: values.cardPayment,
+      pagoTransferencia: values.transferPayment,
+      visible: boolean(input.visible, "Visibilidad"),
+    }).where(eq(datServicios.id, serviceId));
+    if (!result[0].affectedRows) throw new AdminError("service_not_found", "El servicio no existe.", 404);
+    await tx.delete(relServiciosCategorias).where(eq(relServiciosCategorias.servicioId, serviceId));
+    await tx.insert(relServiciosCategorias).values(savedCategoryIds.map((categoriaId) => ({ servicioId: serviceId, categoriaId })));
+    await tx.delete(datHorariosServicio).where(eq(datHorariosServicio.servicioId, serviceId));
+    if (!categorySelection.requiresUnits && schedule.length) await tx.insert(datHorariosServicio).values(schedule.map((item) => ({ servicioId: serviceId, diaSemana: item.day, bloque: item.block, horaInicio: item.start, horaFin: item.end })));
+  });
 }
 
 export async function addUnit(serviceIdValue, input) {
   const serviceId = requiredId(serviceIdValue, "Servicio");
   const values = unitValues(input);
   await getDb().transaction(async (tx) => {
-    const [service] = await tx.select({ id: datServicios.id }).from(datServicios).where(eq(datServicios.id, serviceId)).limit(1);
+    const [service] = await tx.select({ id: datServicios.id, operationMode: datServicios.modoOperacion }).from(datServicios).where(eq(datServicios.id, serviceId)).limit(1);
     if (!service) throw new AdminError("service_not_found", "El servicio no existe.", 404);
+    if (service.operationMode !== "unidades") throw new AdminError("units_not_supported", "Este servicio no utiliza unidades.");
     const state = await unavailableState(tx);
     await tx.insert(datUnidades).values({
       servicioId: serviceId,

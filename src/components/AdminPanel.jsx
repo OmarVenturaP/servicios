@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BarChart3, Check, CheckCircle2, ChevronLeft, Copy, ImageIcon, KeyRound, Plus, Search, Settings2, Siren, Trash2, Upload, X, XCircle } from "lucide-react";
+import { BarChart3, CalendarDays, Check, CheckCircle2, ChevronLeft, Copy, ImageIcon, KeyRound, Plus, Search, Settings2, Siren, Trash2, Upload, X, XCircle } from "lucide-react";
 import BrandMark from "./BrandMark";
 import Header from "./Header";
 
@@ -21,6 +21,49 @@ function FormField({ label, name, defaultValue = "", type = "text", required = f
       {children ?? <input className={inputClass} name={name} type={type} min={type === "number" ? "0.01" : undefined} step={type === "number" ? "0.01" : undefined} defaultValue={defaultValue ?? ""} required={required} />}
     </label>
   );
+}
+
+function PaymentFields({ service }) {
+  const payments = [
+    ["cashPayment", "Efectivo", service?.cashPayment],
+    ["cardPayment", "Tarjeta", service?.cardPayment],
+    ["transferPayment", "Transferencia", service?.transferPayment],
+  ];
+  return (
+    <fieldset className="rounded-xl border border-slate-200 p-3">
+      <legend className="px-1 text-sm font-bold text-slate-600">Métodos de pago aceptados</legend>
+      <div className="mt-1 grid gap-2 sm:grid-cols-3">
+        {payments.map(([name, label, checked]) => <label key={name} className="flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name={name} value="true" defaultChecked={checked} className="size-4" />{label}</label>)}
+      </div>
+    </fieldset>
+  );
+}
+
+function CategoryFields({ categories, selectedIds, onChange, lockedRequiresUnits }) {
+  const selected = categories.filter((category) => selectedIds.includes(category.id));
+  const requiredMode = lockedRequiresUnits ?? selected[0]?.requiresUnits;
+  return <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-sm font-bold text-slate-600">Categorías</legend><p className="mt-1 text-xs leading-5 text-slate-500">El servicio aparecerá en cada categoría seleccionada.</p><div className="mt-2 grid gap-2 sm:grid-cols-2">{categories.map((category) => { const checked = selectedIds.includes(category.id); const incompatible = requiredMode !== undefined && requiredMode !== category.requiresUnits && !checked; return <label key={category.id} className={`flex min-h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${incompatible ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400" : "border-slate-200 bg-white text-slate-700"}`}><input type="checkbox" name="categoryIds" value={category.id} checked={checked} disabled={incompatible} onChange={() => onChange(checked ? selectedIds.filter((id) => id !== category.id) : [...selectedIds, category.id])} className="size-4" />{category.name}</label>; })}</div>{requiredMode !== undefined ? <p className="mt-2 text-xs font-semibold text-[var(--brand-blue)]">Modo compatible: {requiredMode ? "servicio con unidades" : "atención general"}.</p> : null}</fieldset>;
+}
+
+const scheduleDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+function ScheduleFields({ initialSchedule = [] }) {
+  const [schedule, setSchedule] = useState(() => initialSchedule.map((item) => ({ day: Number(item.day), block: Number(item.block), start: String(item.start).slice(0, 5), end: String(item.end).slice(0, 5) })));
+  function blocksFor(day) {
+    return schedule.filter((item) => item.day === day).sort((a, b) => a.block - b.block);
+  }
+  function addBlock(day) {
+    const blocks = blocksFor(day);
+    if (blocks.length >= 2) return;
+    setSchedule((current) => [...current, { day, block: blocks.length + 1, start: blocks.length ? "16:00" : "08:00", end: blocks.length ? "20:00" : "18:00" }]);
+  }
+  function updateBlock(day, block, field, value) {
+    setSchedule((current) => current.map((item) => item.day === day && item.block === block ? { ...item, [field]: value } : item));
+  }
+  function removeBlock(day, block) {
+    setSchedule((current) => current.filter((item) => item.day !== day || item.block !== block).map((item) => item.day === day && item.block > block ? { ...item, block: item.block - 1 } : item));
+  }
+  return <fieldset className="rounded-2xl border border-slate-200 p-3"><legend className="flex items-center gap-2 px-1 text-sm font-bold text-slate-700"><CalendarDays size={17} aria-hidden="true" /> Horario semanal</legend><input type="hidden" name="schedule" value={JSON.stringify(schedule)} readOnly /><p className="mt-1 text-xs leading-5 text-slate-500">Configura hasta dos bloques por día. Déjalo cerrado si no atiende.</p><div className="mt-3 grid gap-3">{scheduleDays.map((label, index) => { const day = index + 1; const blocks = blocksFor(day); return <div key={day} className="rounded-xl bg-slate-50 p-3"><div className="flex items-center justify-between gap-2"><p className="text-sm font-extrabold text-slate-900">{label}</p><button type="button" onClick={() => addBlock(day)} disabled={blocks.length >= 2} className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-extrabold text-[var(--brand-blue)] disabled:opacity-40">+ Horario</button></div>{blocks.length ? <div className="mt-2 grid gap-2">{blocks.map((block) => <div key={block.block} className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2"><input aria-label={`Inicio ${label}`} type="time" className={`${inputClass} mt-0 min-w-0 px-2`} value={block.start} onChange={(event) => updateBlock(day, block.block, "start", event.target.value)} required /><span aria-hidden="true">—</span><input aria-label={`Fin ${label}`} type="time" className={`${inputClass} mt-0 min-w-0 px-2`} value={block.end} onChange={(event) => updateBlock(day, block.block, "end", event.target.value)} required /><button type="button" onClick={() => removeBlock(day, block.block)} className="col-span-3 min-h-9 justify-self-end px-2 text-xs font-bold text-slate-500">Eliminar</button></div>)}</div> : <p className="mt-2 text-xs text-slate-400">Cerrado</p>}</div>; })}</div></fieldset>;
 }
 
 function formValues(form) {
@@ -48,6 +91,9 @@ export default function AdminPanel() {
   const [accessKey, setAccessKey] = useState("");
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [createCategoryIds, setCreateCategoryIds] = useState([]);
+  const [editCategoryIds, setEditCategoryIds] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [selectedUnitId, setSelectedUnitId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -62,8 +108,14 @@ export default function AdminPanel() {
   const selectedUnit = selectedService?.units.find((unit) => unit.id === selectedUnitId) ?? selectedService?.units[0] ?? null;
   const filteredServices = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("es-MX");
-    return data?.services.filter((service) => !query || service.name.toLocaleLowerCase("es-MX").includes(query)) ?? [];
-  }, [data, search]);
+    return data?.services.filter((service) => (
+      (!query || service.name.toLocaleLowerCase("es-MX").includes(query))
+      && (categoryFilter === "all" || service.categoryIds.includes(Number(categoryFilter)))
+    )) ?? [];
+  }, [categoryFilter, data, search]);
+  const createRequiresUnits = data?.categories.find((category) => createCategoryIds.includes(category.id))?.requiresUnits ?? false;
+  const createHasCategories = createCategoryIds.length > 0;
+  const editRequiresUnits = data?.categories.find((category) => editCategoryIds.includes(category.id))?.requiresUnits ?? selectedService?.requiresUnits ?? false;
 
   useEffect(() => {
     if (!feedback || !data) return;
@@ -173,11 +225,18 @@ export default function AdminPanel() {
       const result = await execute("create_provider", { data: {
         cityId: values.cityId,
         contactModeId: values.contactModeId,
+        categoryIds: new FormData(form).getAll("categoryIds"),
         service: {
           name: values["service.name"],
           phone: values["service.phone"],
           whatsapp: values["service.whatsapp"],
           coverage: values["service.coverage"],
+          shortInformation: values["service.shortInformation"],
+          extendedInformation: values["service.extendedInformation"],
+          schedule: values.schedule,
+          cashPayment: values["service.cashPayment"] === "true",
+          cardPayment: values["service.cardPayment"] === "true",
+          transferPayment: values["service.transferPayment"] === "true",
         },
         unit: {
           name: values["unit.name"],
@@ -187,6 +246,7 @@ export default function AdminPanel() {
         },
       } });
       form.reset();
+      setCreateCategoryIds([]);
       setShowCreate(false);
       setShowAddUnit(false);
       setSelectedServiceId(result.selectedServiceId);
@@ -195,12 +255,12 @@ export default function AdminPanel() {
       if (createLogo.file) {
         try {
           await uploadLogo(result.selectedServiceId, createLogo.file);
-          setFeedback({ type: "success", message: "Proveedor, primera unidad y logo creados." });
+          setFeedback({ type: "success", message: createdService?.requiresUnits ? "Proveedor, primera unidad y logo creados." : "Proveedor y logo creados." });
         } catch (error) {
           setFeedback({ type: "error", message: `El proveedor fue creado sin logo. ${error.message}` });
         }
       } else {
-        setFeedback({ type: "success", message: "Proveedor y primera unidad creados." });
+        setFeedback({ type: "success", message: createdService?.requiresUnits ? "Proveedor y primera unidad creados." : "Proveedor creado correctamente." });
       }
       setCreateLogo({ file: null, preview: null });
     } catch {}
@@ -224,15 +284,24 @@ export default function AdminPanel() {
 
   async function updateServiceFromForm(event) {
     event.preventDefault();
-    const values = formValues(event.currentTarget);
+    const form = event.currentTarget;
+    const values = formValues(form);
     try {
-      await execute("update_service", { serviceId: selectedService.id, data: { ...values, visible: values.visible === "true" } });
+      await execute("update_service", { serviceId: selectedService.id, data: {
+        ...values,
+        categoryIds: new FormData(form).getAll("categoryIds"),
+        visible: values.visible === "true",
+        cashPayment: values.cashPayment === "true",
+        cardPayment: values.cardPayment === "true",
+        transferPayment: values.transferPayment === "true",
+      } });
       setFeedback({ type: "success", message: "Servicio actualizado." });
     } catch {}
   }
 
   function openService(service) {
     setSelectedServiceId(service.id);
+    setEditCategoryIds(service.categoryIds);
     setSelectedUnitId(service.units[0]?.id ?? null);
     setGeneratedAccess(null);
     setFeedback(null);
@@ -266,17 +335,18 @@ export default function AdminPanel() {
         <form onSubmit={createProviderFromForm} className={`${cardClass} grid gap-4`}>
           <h2 className="text-lg font-black text-slate-950">Servicio</h2>
           <FormField label="Ciudad" name="cityId"><select className={inputClass} name="cityId" required>{data.cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select></FormField>
+          <CategoryFields categories={data.categories} selectedIds={createCategoryIds} onChange={setCreateCategoryIds} />
           <FormField label="Nombre" name="service.name" required />
           <FormField label="Modo de contacto" name="contactModeId"><select className={inputClass} name="contactModeId" required>{data.contactModes.map((mode) => <option key={mode.id} value={mode.id}>{mode.name}</option>)}</select></FormField>
           <FormField label="Teléfono" name="service.phone" inputMode="tel" />
           <FormField label="WhatsApp" name="service.whatsapp" inputMode="tel" />
+          <FormField label="Información corta para la tarjeta" name="service.shortInformation"><textarea className={`${inputClass} min-h-20 py-3`} name="service.shortInformation" maxLength={500} /></FormField>
+          <FormField label="Información extendida" name="service.extendedInformation"><textarea className={`${inputClass} min-h-28 py-3`} name="service.extendedInformation" maxLength={4000} /></FormField>
           <FormField label="Cobertura" name="service.coverage" />
+          <PaymentFields />
+          {createHasCategories && !createRequiresUnits ? <ScheduleFields /> : null}
           <LogoPicker value={createLogo} onChange={(event) => selectLogo(event, setCreateLogo)} disabled={pending} />
-          <h2 className="mt-2 border-t border-slate-200 pt-5 text-lg font-black text-slate-950">Primera unidad</h2>
-          <FormField label="Nombre opcional" name="unit.name" />
-          <FormField label="Teléfono" name="unit.phone" />
-          <FormField label="WhatsApp" name="unit.whatsapp" />
-          <FormField label="Precio base" name="unit.priceBase" type="number" required />
+          {createHasCategories && createRequiresUnits ? <><h2 className="mt-2 border-t border-slate-200 pt-5 text-lg font-black text-slate-950">Primera unidad</h2><FormField label="Nombre opcional" name="unit.name" /><FormField label="Teléfono" name="unit.phone" /><FormField label="WhatsApp" name="unit.whatsapp" /><FormField label="Precio base" name="unit.priceBase" type="number" required /></> : null}
           <button className={primaryButton} disabled={pending}>{pending ? "Creando..." : "Crear proveedor"}</button>
         </form>
       </AdminShell>
@@ -289,11 +359,15 @@ export default function AdminPanel() {
         <form key={`service-${selectedService.id}`} onSubmit={updateServiceFromForm} className={`${cardClass} grid gap-4`}>
           <h2 className="text-lg font-black text-slate-950">Información del servicio</h2>
           <FormField label="Nombre" name="name" defaultValue={selectedService.name} required />
+          <CategoryFields categories={data.categories} selectedIds={editCategoryIds} onChange={setEditCategoryIds} lockedRequiresUnits={selectedService.requiresUnits} />
           <FormField label="Modo de contacto" name="contactModeId"><select className={inputClass} name="contactModeId" defaultValue={selectedService.contactModeId}>{data.contactModes.map((mode) => <option key={mode.id} value={mode.id}>{mode.name}</option>)}</select></FormField>
           <FormField label="Teléfono" name="phone" defaultValue={selectedService.phone} />
           <FormField label="WhatsApp" name="whatsapp" defaultValue={selectedService.whatsapp} />
-          <FormField label="Descripción" name="description"><textarea className={`${inputClass} min-h-24 py-3`} name="description" defaultValue={selectedService.description ?? ""} /></FormField>
+          <FormField label="Información corta para la tarjeta" name="shortInformation"><textarea className={`${inputClass} min-h-20 py-3`} name="shortInformation" maxLength={500} defaultValue={selectedService.shortInformation ?? ""} /></FormField>
+          <FormField label="Información extendida para el detalle" name="extendedInformation"><textarea className={`${inputClass} min-h-28 py-3`} name="extendedInformation" maxLength={4000} defaultValue={selectedService.extendedInformation ?? ""} /></FormField>
           <FormField label="Cobertura" name="coverage"><textarea className={`${inputClass} min-h-20 py-3`} name="coverage" defaultValue={selectedService.coverage ?? ""} /></FormField>
+          <PaymentFields service={selectedService} />
+          {!editRequiresUnits ? <ScheduleFields key={`schedule-${selectedService.id}`} initialSchedule={selectedService.schedule} /> : <input type="hidden" name="schedule" value="[]" />}
           <label className="flex min-h-11 items-center gap-3 text-sm font-bold text-slate-700"><input type="checkbox" name="visible" value="true" defaultChecked={selectedService.visible} className="size-5" /> Visible públicamente</label>
           <button className={primaryButton} disabled={pending}>{pending ? "Guardando..." : "Guardar servicio"}</button>
         </form>
@@ -306,14 +380,14 @@ export default function AdminPanel() {
         </section>
 
         <section className={`${cardClass} mt-4`}>
-          <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">Unidades</h2><button type="button" onClick={() => setShowAddUnit(!showAddUnit)} className="brand-soft-surface flex min-h-10 items-center gap-1 rounded-xl border px-3 text-sm font-extrabold text-[var(--brand-blue)]"><Plus size={17} /> Agregar</button></div>
+          {selectedService.requiresUnits ? <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-950">Unidades</h2><button type="button" onClick={() => setShowAddUnit(!showAddUnit)} className="brand-soft-surface flex min-h-10 items-center gap-1 rounded-xl border px-3 text-sm font-extrabold text-[var(--brand-blue)]"><Plus size={17} /> Agregar</button></div> : <h2 className="text-lg font-black text-slate-950">Información de atención</h2>}
           {showAddUnit ? <UnitCreateForm pending={pending} onSubmit={addUnitFromForm} onCancel={() => setShowAddUnit(false)} /> : null}
-          {selectedService.units.length ? (
+          {selectedService.requiresUnits && selectedService.units.length ? (
             <>
               <label className={`${labelClass} mt-4`}>Unidad<select className={inputClass} value={selectedUnit?.id ?? ""} onChange={(event) => { setSelectedUnitId(Number(event.target.value)); setGeneratedAccess(null); }}>{selectedService.units.map((unit, index) => <option key={unit.id} value={unit.id}>{unit.name || `Unidad ${index + 1}`}</option>)}</select></label>
               {selectedUnit ? <UnitEditor key={selectedUnit.id} unit={selectedUnit} service={selectedService} pending={pending} generatedAccess={generatedAccess} onSave={async (event) => { event.preventDefault(); const values = formValues(event.currentTarget); try { await execute("update_unit", { serviceId: selectedService.id, unitId: selectedUnit.id, data: { ...values, active: values.active === "true" } }); setFeedback({ type: "success", message: "Unidad actualizada." }); } catch {} }} onStatus={async (statusAction) => { try { await execute("update_unit_status", { serviceId: selectedService.id, unitId: selectedUnit.id, statusAction }); setFeedback({ type: "success", message: "Estado actualizado." }); } catch {} }} onAccess={async () => { if (selectedUnit.hasAccess && !window.confirm("El enlace anterior dejará de funcionar. ¿Deseas rotar el acceso?")) return; try { await execute("rotate_access", { serviceId: selectedService.id, unitId: selectedUnit.id }); setFeedback({ type: "success", message: "Acceso privado generado." }); } catch {} }} /> : null}
             </>
-          ) : <p className="mt-4 text-sm text-slate-500">Este servicio todavía no tiene unidades.</p>}
+          ) : <p className="mt-4 text-sm text-slate-500">{selectedService.requiresUnits ? "Este servicio todavía no tiene unidades." : "Esta categoría se administra como negocio, sin unidades."}</p>}
         </section>
       </AdminShell>
     );
@@ -321,11 +395,13 @@ export default function AdminPanel() {
 
   return (
     <AdminShell title="Servicios" subtitle="Administración operativa" feedback={feedback}>
-      <div className="relative"><Search className="absolute left-3 top-3.5 text-slate-400" size={19} /><input aria-label="Buscar servicio" className={`${inputClass} mt-0 pl-10`} placeholder="Buscar servicio" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
+      <div className="relative"><Search className="absolute left-3 top-3.5 text-slate-400" size={19} /><input aria-label="Buscar servicio" className={`${inputClass} mt-0 pl-10`} placeholder="Buscar servicio por nombre" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
+      <select aria-label="Filtrar por categoría" className={inputClass} value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">Todas las categorías</option>{data.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
       <button type="button" onClick={() => { setShowCreate(true); setFeedback(null); }} className={`${primaryButton} mt-3`}><Plus size={19} /> Nuevo proveedor</button>
       <Link href="/admin/metricas" className="brand-soft-surface mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-extrabold text-[var(--brand-blue)]"><BarChart3 size={18} /> Ver métricas</Link>
+      <Link href="/admin/publicidad" className="brand-soft-surface mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border px-4 text-sm font-extrabold text-[var(--brand-blue)]">Administrar publicidad</Link>
       <Link href="/admin/emergencias" className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-extrabold text-red-700"><Siren size={18} /> Administrar Emergencias</Link>
-      <div className="mt-4 grid gap-3">{filteredServices.map((service) => { const status = serviceStatus(service); return <article key={service.id} className={cardClass}><div className="flex items-center gap-3"><AdminServiceThumbnail key={service.logoUrl || `fallback-${service.id}`} service={service} /><div className="min-w-0 flex-1"><p className="text-xs font-bold uppercase tracking-wide text-[var(--brand-blue)]">{service.cityName}</p><div className="mt-1 flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ring-2 ring-white ${status.color}`} role="img" aria-label={`Estado: ${status.label}`} title={status.label} /><h2 className="truncate text-lg font-black text-slate-950">{service.name}</h2></div><p className="mt-1 text-sm text-slate-500">{service.units.length} {service.units.length === 1 ? "unidad" : "unidades"}</p></div></div><button type="button" onClick={() => openService(service)} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-navy)] text-sm font-extrabold text-white"><Settings2 size={17} /> Administrar</button></article>; })}</div>
+      <div className="mt-4 grid gap-3">{filteredServices.map((service) => { const status = serviceStatus(service); return <article key={service.id} className={cardClass}><div className="flex items-center gap-3"><AdminServiceThumbnail key={service.logoUrl || `fallback-${service.id}`} service={service} /><div className="min-w-0 flex-1"><p className="text-xs font-bold uppercase tracking-wide text-[var(--brand-blue)]">{service.cityName} · {service.categoryNames.join(" · ")}</p><div className="mt-1 flex min-w-0 items-center gap-2">{service.requiresUnits ? <span className={`size-2.5 shrink-0 rounded-full ring-2 ring-white ${status.color}`} role="img" aria-label={`Estado: ${status.label}`} title={status.label} /> : null}<h2 className="truncate text-lg font-black text-slate-950">{service.name}</h2></div><p className="mt-1 text-sm text-slate-500">{service.requiresUnits ? `${service.units.length} ${service.units.length === 1 ? "unidad" : "unidades"}` : "Atención por negocio"}</p></div></div><button type="button" onClick={() => openService(service)} className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-navy)] text-sm font-extrabold text-white"><Settings2 size={17} /> Administrar</button></article>; })}</div>
     </AdminShell>
   );
 }

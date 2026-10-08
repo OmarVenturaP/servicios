@@ -16,7 +16,7 @@ export const siteConfig = {
   pilot: {
     period: " de 2026",
     whatsapp: "529619326182",
-    message: "Hola, quiero que mi servicio aparezca en Servicios y me interesa unirme al piloto. ¿Me pueden compartir información?",
+    message: "Hola, quiero que mi servicio aparezca en la plataforma SERVICIOS y me interesa unirme. ¿Me pueden compartir información?",
   },
   legalUpdatedAt: "7 de septiembre de 2026",
   assets: {

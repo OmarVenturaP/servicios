@@ -6,7 +6,8 @@
 > Arquitectura: Multi-ciudad  
 > Plataforma: Web / Mobile First
 >
-> Actualización: 11 de septiembre de 2026 — apartado fijo de Emergencias (especificado; pendiente de implementación)
+> Actualización: 7 de octubre de 2026 — categorías controladas por MySQL, CCTV, acceso inferior a Emergencias y carrusel de publicidad con administración.
+> Se conservan las reglas de horarios, contenido e identidad visual de la sección 69.
 
 ---
 
@@ -251,7 +252,10 @@ La entidad comercial principal es:
 
 NO utilizar "Flotilla" como entidad principal.
 
-Un servicio puede tener una o varias unidades.
+Un servicio cuya operación dependa de unidades puede tener una o varias
+unidades. Los servicios con atención general independiente de unidades no
+requieren unidades ficticias; ver la ampliación por modo de operación en
+la sección 69.
 
 Ejemplo de proveedor independiente:
 
@@ -391,6 +395,11 @@ Debe existir una restricción única equivalente a:
     ciudad_id + slug
 
 Esto permite que un slug pueda existir en otra ciudad sin conflicto.
+
+La sección 69 añade `informacion_corta`, `informacion_extendida`,
+`modo_operacion` y el horario de atención a nivel servicio cuando corresponda.
+La descripción histórica se conserva para compatibilidad y la migración
+inicializa ambos campos editoriales con su contenido previo.
 
 ---
 
@@ -1002,6 +1011,12 @@ Principios:
 - botones grandes;
 - controles cómodos para touch.
 
+## 39.1 Identidad obligatoria para componentes nuevos
+
+Todo botón, texto, tarjeta, fila de horario, modal y editor nuevo debe
+respetar las fuentes y patrones verificados en la sección 69.4, además de
+las secciones 40 a 42. No introducir un estilo propio por categoría.
+
 ---
 
 # 40. Tipografía
@@ -1165,6 +1180,12 @@ Ejemplo:
     Centro, Evolución y alrededores
 
     [ WhatsApp ] [ Llamar ]
+
+Las tarjetas incorporarán al pie el horario de hoy cuando exista horario
+configurado, conforme a la sección 69.2. Para servicios que abren modal,
+el listado utiliza `informacion_corta` y la vista ampliada utiliza
+`informacion_extendida`; ver la sección 69.3. Los indicadores de unidades
+y precio solo corresponden a los modos de operación que los utilizan.
 
 ---
 
@@ -1449,7 +1470,8 @@ unidad.
 El panel administrativo permitirá crear un proveedor desde una única
 pantalla.
 
-Para un proveedor independiente, la operación inicial creará:
+Para un proveedor independiente cuya operación dependa de unidades, la
+operación inicial creará:
 
     1 dat_servicios
     +
@@ -1500,6 +1522,12 @@ Para el logo podrá:
 - eliminar.
 
 Estas operaciones utilizarán Cloudinary.
+
+Como ampliación especificada, la edición permitirá gestionar por separado
+`informacion_corta` e `informacion_extendida` para servicios que abren
+modal y el horario general para servicios independientes de unidades
+(sección 69). Su alta no debe crear una unidad artificial. Los horarios
+de operaciones basadas en unidades se mantienen en cada unidad.
 
 # 51.4 Gestión de accesos privados
 
@@ -2136,7 +2164,7 @@ Estado: especificado; pendiente de implementación.
 
 - migración independiente para `dat_contactos_emergencia`;
 - página `/[ciudad]/emergencias` y consulta por ciudad;
-- acceso permanente en navegación y acceso destacado en la landing;
+- acceso permanente únicamente en la navegación inferior de la landing;
 - tarjetas con llamada directa;
 - gestión protegida desde `/admin`;
 - verificación de datos antes de publicación;
@@ -3235,6 +3263,10 @@ La disponibilidad efectiva compartida por landing, precio y contacto se calcula 
 
 La especificación técnica, compatibilidad y limitaciones se documentan en `docs/FASE-6.5-DISPONIBILIDAD.md`.
 
+La sección 69 reutiliza estas reglas cuando corresponda para el horario
+general de servicios independientes de unidades y define su presentación
+pública. No traslada los horarios de Mandados al nivel servicio.
+
 ---
 
 # 67. Analítica de comportamiento del piloto
@@ -3275,10 +3307,11 @@ ha sido confirmado; no equivale a disponibilidad en tiempo real.
 ## 68.2 Accesos, ciudad y navegación
 
 - Añadir Emergencias a la barra inferior: Inicio · Buscar · Emergencias · Más.
-- Añadir un acceso destacado antes del bloque de categorías de la landing.
-- Ambos accesos llevan a `/[ciudad]/emergencias` y conservan la ciudad actual.
-- El acceso destacado no pertenece a la lista filtrada: no desaparece al
-  buscar, limpiar la búsqueda o cambiar el orden de Mandados.
+- En la landing, el acceso se conserva únicamente en la barra inferior;
+  no mostrar Emergencias en el carrusel ni como acceso destacado adicional.
+- El acceso lleva a `/[ciudad]/emergencias` y conserva la ciudad actual.
+- La barra inferior no depende del filtro: el acceso permanece al buscar,
+  limpiar la búsqueda o cambiar el orden de Mandados.
 - Usar icono y texto, con acento rojo discreto y contraste legible. El color
   no debe ser el único indicador de la función o selección.
 - Los controles deben ser accesibles por teclado y cómodos en móvil.
@@ -3450,8 +3483,9 @@ La implementación no requiere dependencias ni variables de entorno nuevas.
 
 ## 68.10 Criterios de aceptación
 
-1. Los dos accesos llevan a Emergencias conservando la ciudad y permanecen
-   utilizables al filtrar categorías o cuando no hay repartidores disponibles.
+1. El acceso inferior lleva a Emergencias conservando la ciudad y permanece
+   utilizable al filtrar categorías o cuando no hay repartidores disponibles.
+   Emergencias no aparece en el carrusel de servicios.
 2. La navegación funciona desde rutas anidadas en móvil y escritorio.
 3. Cada ciudad muestra solo sus contactos publicables; ciudades inexistentes
    o inactivas muestran no encontrado.
@@ -3473,3 +3507,397 @@ La implementación no requiere dependencias ni variables de entorno nuevas.
     métricas; `/u/[token]` y la administración existente siguen funcionando.
 12. Se comprueban validaciones, aislamiento por ciudad y autorización con
     pruebas pertinentes; lint y build pasan al implementar la funcionalidad.
+
+
+---
+
+# 69. Ampliación — Horarios, información y presentación por modo de operación
+
+Estado: implementación incorporada mediante esquema aditivo, administración y
+presentación pública. La migración debe aplicarse por entorno antes del despliegue.
+
+Esta sección amplía el alcance inicial de las secciones 8, 13, 19, 25, 44,
+46, 51, 55 y 65 para contemplar servicios como A/C y futuras categorías de
+negocio. Las referencias al piloto exclusivo de Mandados describen el
+alcance inicial; no impiden esta ampliación. No se habilitan automáticamente
+categorías por documentarlas. Emergencias conserva sus reglas específicas
+de verificación, contacto y horario informativo de la sección 68.
+
+## 69.1 Modo de operación y fuente del horario
+
+Distinguir conceptualmente dos modos de operación:
+
+- **Basado en unidades:** Mandados y cualquier otro servicio que opere así
+  conservan horarios y disponibilidad a nivel unidad. El estado del servicio
+  se deriva de sus unidades efectivamente disponibles, según la sección 66.
+- **Atención general del servicio:** negocios cuya disponibilidad no depende
+  de unidades, como A/C, pueden configurar su horario semanal directamente
+  a nivel servicio, sin crear repartidores o vehículos ficticios.
+
+Resolver estas capacidades mediante el modo de operación o configuración
+explícita, nunca comparando nombres, etiquetas o slugs de categorías.
+El modo de operación es distinto del modo de contacto (`central`/`unidad`)
+y del modo de disponibilidad de una unidad (`manual`/`programado`). Tener
+contacto central no convierte por sí solo al proveedor en un negocio sin
+unidades. Abrir un modal tampoco determina la fuente de disponibilidad.
+
+Reutilizar las reglas de la sección 66 y de
+`docs/FASE-6.5-DISPONIBILIDAD.md` cuando sean aplicables:
+
+- zona horaria IANA de la ciudad, con cálculo de hoy y hora actual en esa
+  zona; nunca depender de la zona del dispositivo ni hardcodear la ciudad;
+- horario semanal con hasta dos bloques por día, validación de horas y
+  campos completos, sin solapamientos; días cerrados sin bloques;
+- intervalos `[inicio, fin)`; no admitir bloques que crucen medianoche en
+  esta versión y mantener el tratamiento existente por días separados;
+- distinguir horario configurado de disponibilidad efectiva; mantener para
+  unidades la prioridad de activo, excepción vigente y modo manual o
+  programado, ignorando excepciones vencidas;
+- compartir reglas de cálculo entre las vistas y operaciones que consuman
+  disponibilidad, sin procesos periódicos que cambien estados por horario.
+
+En atención general, el horario permite indicar apertura/cierre según el
+horario del negocio; no garantiza atención inmediata ni disponibilidad de
+personal. Sin horario configurado no inferir que está abierto, cerrado o
+atiende las 24 horas. No trasladar automáticamente a estos negocios los
+estados de repartidor, renovaciones de tres horas, precio por unidad ni
+rotación de contactos. Las excepciones solo se reutilizan si el modo de
+operación las contempla; esta ampliación no define nuevos controles de
+pausa para negocios.
+
+## 69.2 Horario en tarjeta y vista ampliada
+
+Para todos los servicios, mostrar al pie de la tarjeta, después de sus
+acciones, una fila informativa con el horario correspondiente a hoy cuando
+exista horario configurado y aplicable:
+
+- Un bloque: `Hoy: 08:00–18:00`.
+- Dos bloques: `Hoy: 08:00–14:00 · 16:00–20:00`; mostrar ambos, sin ocultar
+  el segundo ni presentar el descanso como tiempo de atención.
+- Semana configurada con hoy cerrado: `Hoy: cerrado`, distinguiéndolo de
+  la ausencia de configuración.
+- Sin horario configurado: omitir toda la fila, sin dejar un espacio vacío
+  ni inventar un horario o un estado.
+
+La tarjeta muestra únicamente el día actual y, para atención general del
+servicio, indica `Abierto ahora` cuando la hora de la ciudad pertenece a un
+bloque publicado o `Cerrado` en cualquier otro momento. Esta etiqueta describe
+el horario publicado y no garantiza atención inmediata. El modal público se
+reserva para `informacion_extendida` y no repite el horario semanal. Una pausa
+o un estado ocupado no reescriben el horario semanal publicado.
+
+En operaciones basadas en unidades, la fuente sigue siendo el horario de
+las unidades; no añadir un horario general paralelo para Mandados. Si sus
+horarios difieren, el resumen debe preservar los huecos y no sugerir que
+todas las unidades atienden en el mismo horario. La consolidación se define
+en 69.5; no elegir arbitrariamente la primera unidad ni reducir varios
+intervalos a una apertura y cierre continuos.
+
+En Emergencias solo mostrar horarios confirmados conforme a la sección 68.
+Un `horario_texto` libre no permite deducir automáticamente una semana ni
+un horario de hoy; no inferirlos ni convertirlos en disponibilidad comercial.
+
+## 69.3 Información corta y extendida
+
+Para servicios que abren modal o vista ampliada, definir conceptualmente:
+
+- `informacion_corta`: contenido editorial propio para tarjeta/listado.
+- `informacion_extendida`: contenido de detalle para el modal/vista ampliada.
+
+Los dos contenidos se gestionan de forma independiente. La información
+corta no se obtiene truncando, recortando ni resumiendo automáticamente la
+extendida. Editar uno no debe sobrescribir ni regenerar el otro. Un límite
+visual de líneas no sustituye esta separación editorial.
+
+No rellenar un campo vacío automáticamente con el otro ni mostrar textos
+ficticios. Los límites y transición del campo existente `descripcion` se
+definen en 69.5, conservando los datos previos.
+El horario se presenta como información estructurada independiente de
+ambos textos. Aplicar estas reglas por capacidad de vista ampliada, no por
+un nombre de categoría como A/C.
+
+## 69.4 Identidad de marca y patrones visuales existentes
+
+Fuentes inspeccionadas:
+
+- `docs/brand/servicios-identidad-marca.png`: manual visual de identidad.
+- Secciones 39 a 42 de este documento.
+- `src/app/layout.js` y `src/app/globals.css`: fuente y tokens actuales.
+- `src/components/ContactButtons.jsx` y `src/components/ServiceCard.jsx`:
+  patrones de botones, tarjeta y modal, incluidos los cambios locales.
+
+**Requisitos de identidad:**
+
+- Usar Plus Jakarta Sans mediante `--font-plus-jakarta` / `--font-sans` y
+  los fallbacks existentes. Wordmark Semibold (600), textos secundarios
+  Regular/Medium (400/500), como indica el manual. La sección 40 establece
+  además Semibold para títulos; no sustituir la familia por otra.
+- Reutilizar `--brand-green` (`#34D399`), `--brand-teal` (`#2ECF9D`),
+  `--brand-blue` (`#2563EB`), `--brand-navy` (`#0B172A`) y
+  `--brand-gradient` (135 grados, verde a azul). Mantener separados los
+  colores semánticos y de canales. Los tokens actuales de fondo y texto
+  son `--background: #eef1f6` y `--foreground: #0b172a`.
+- Usar los recursos de logo existentes sin recolorear, rotar ni deformar.
+  El manual exige margen libre igual al diámetro del punto del isotipo,
+  logo horizontal digital de al menos 80 px e isotipo de al menos 24 px.
+- Conservar iconografía lineal/redondeada y coherente según la sección 41,
+  jerarquía legible, contraste y composición mobile-first.
+
+**Patrones de interfaz que deben reutilizarse según la función:**
+
+- Acción de marca `.brand-primary-action`: gradiente, texto blanco sin
+  subrayado y hover `brightness(0.96)`. La superficie suave existente es
+  `.brand-soft-surface`; reutilizar sus mezclas de color cuando corresponda.
+- Botones de contacto actuales: `min-h-11` (2.75 rem), `rounded-lg`,
+  `px-3`, `text-xs`, `font-extrabold`, texto blanco, `shadow-sm`,
+  `transition-colors`; grupo con `gap-2` e icono/texto con `gap-1.5`.
+  WhatsApp usa `bg-emerald-700` / `hover:bg-emerald-800`; llamada usa
+  `--brand-blue` / `hover:brightness-95`. No sustituir todos los botones
+  de canal por el gradiente de marca.
+- Respetar foco visible global de 3 px en `--brand-blue` con separación
+  de 2 px. En acciones equivalentes conservar carga (`Abriendo...`),
+  bloqueo durante la petición, estado deshabilitado gris y cursor no
+  permitido, y error textual; no comunicar estados solo con color.
+- Tarjeta actual: `rounded-xl`, borde, `p-3`, `gap-3`, sombra
+  `0 4px 14px rgba(15,23,42,0.08)`. Modal actual: `rounded-2xl`, `p-5`,
+  `max-w-md`, fondo blanco y `shadow-2xl`. Reutilizar la escala Tailwind
+  existente para radios y espaciado, sin inventar valores por categoría.
+- Como referencia de tamaños actuales: descripción de tarjeta `text-xs`
+  con `leading-5`; cuerpo del modal `text-sm` con `leading-6`; título de
+  tarjeta `text-[0.93rem]` y título del modal `text-lg`. La nueva fila de
+  horario debe mantener la jerarquía de texto secundario legible y ambos
+  bloques visibles en móvil. Estos son patrones de implementación, no
+  tamaños prescritos por el manual de marca.
+
+**Ambigüedades de identidad que deben mantenerse explícitas:** el manual
+no define una escala completa de tamaños/interlineados, radios, espaciado,
+sombras, variantes de botón o estados hover/active/disabled/loading. El
+proyecto tampoco centraliza todos esos valores como tokens semánticos;
+muchos están en clases Tailwind de componentes. No atribuir al manual
+medidas que solo aparecen en el código.
+
+Existe diferencia entre los títulos Semibold de la sección 40 y los
+`font-black` (900) actuales de tarjeta/modal; los botones usan
+`font-extrabold` (800), peso que el manual no especifica para controles.
+La especificación tipográfica sigue siendo la referencia para textos
+nuevos; los estilos de controles existentes son referencia para controles
+equivalentes, sin convertir sus pesos en una regla universal para textos.
+La armonización global de pesos queda pendiente de revisión visual y no
+forma parte de esta actualización. Tampoco existe una matriz completa de
+estados para el botón local “Ver información” o el cierre del modal; las
+nuevas acciones deben conservar el foco global y reutilizar los estados
+aplicables ya definidos, sin inventar una nueva identidad.
+
+## 69.5 Decisiones pendientes y aceptación de la ampliación
+
+La consolidación pública de horarios de varias unidades utiliza la unión de
+los bloques configurados por unidades activas en modo programado. Los bloques
+solapados o contiguos se fusionan y los huecos se conservan; las unidades en
+modo manual no aportan un horario inventado. La consolidación puede producir
+más de dos intervalos públicos aunque cada entidad configurable conserve el
+máximo de dos bloques por día. No se exponen nombres de unidades.
+
+`informacion_corta` admite hasta 500 caracteres y
+`informacion_extendida` hasta 4000 en la validación administrativa inicial.
+La migración conserva la descripción histórica copiándola inicialmente a
+ambos campos; después se editan de forma independiente. La armonización
+visual global ajena a los componentes nuevos permanece fuera de alcance.
+
+Criterios de aceptación de la implementación:
+
+1. La tarjeta muestra abajo el horario de hoy en la zona de la ciudad,
+   conserva ambos bloques y omite la fila si no hay horario configurado.
+2. Un día cerrado de una semana configurada se distingue de la ausencia
+   de horario; la tarjeta indica abierto/cerrado y el modal no repite horarios.
+3. Un negocio independiente puede tener horario propio sin unidades;
+   Mandados y otros servicios basados en unidades conservan la sección 66.
+4. Horario informativo y disponibilidad efectiva permanecen diferenciados,
+   incluidos límites de intervalos, pausas, excepciones y cambio de día.
+5. Los dos textos se editan y muestran independientemente; la tarjeta no
+   obtiene su información corta mediante truncamiento de la extendida.
+6. Las reglas dependen del modo de operación y de la capacidad de modal,
+   sin condiciones por nombres de categorías.
+7. Botones, textos, horarios, tarjetas y modales nuevos respetan 69.4 y
+   se revisan en móvil, escritorio, foco, carga y estados aplicables.
+8. La implementación preserva datos y comportamiento existentes mediante
+   campos y tabla aditivos, sin eliminar la descripción histórica.
+
+# 70. Clasificación múltiple de servicios
+
+Un servicio puede publicarse en una o varias categorías compatibles. Esta
+clasificación sirve para descubrimiento: el mismo proveedor conserva una sola
+identidad, información, contacto, agenda, métricas y registro administrativo,
+aunque aparezca en más de una categoría.
+
+La relación se almacena en `rel_servicios_categorias` mediante
+`servicio_id + categoria_id`. `dat_servicios.categoria_id` se conserva como
+categoría principal por compatibilidad con datos, APIs y migraciones previas;
+todo servicio nuevo o editado debe tener al menos una relación y la categoría
+principal corresponde a la primera categoría activa seleccionada. Si al editar
+no se seleccionan categorías activas pero existen relaciones inactivas previas,
+se conservan esas relaciones y se mantiene la principal si forma parte de ellas;
+de lo contrario, se utiliza una de las relaciones inactivas conservadas.
+
+Las categorías no pueden cambiar ni mezclar el modo operativo del servicio:
+
+- Mandados requiere unidades y solo puede combinarse con categorías que
+  también requieran unidades.
+- A/C, CCTV, Mecánicos, Electricistas, Plomería, Fletes y Limpieza operan inicialmente
+  como atención general del servicio, sin unidades obligatorias, y pueden
+  combinarse entre sí.
+- Cambiar un servicio existente de `unidades` a `servicio`, o a la inversa, no
+  se realiza mediante la selección de categorías. Requiere una decisión de
+  migración explícita para preservar unidades, horarios, disponibilidad y
+  contactos.
+
+La landing filtra por la relación múltiple sin crear copias del proveedor. Si
+la categoría seleccionada no tiene servicios públicos relacionados, debe
+mostrar el estado vacío `No se encuentra ningún servicio`, acompañado por el
+icono de esa categoría y un texto que indique que todavía no existen
+proveedores visibles en la ciudad.
+
+Las categorías activas mantienen su iconografía propia. `Más servicios`
+continúa como elemento de comunicación futura y no funciona como categoría
+publicable. La clasificación múltiple no altera ranking, disponibilidad,
+precios, horarios, contactos ni analítica: esas reglas siguen evaluándose por
+servicio y por su modo operativo.
+
+
+## 70.1 Categoría CCTV
+
+CCTV agrupa servicios de instalación de cámaras de videovigilancia.
+Se muestra inmediatamente después de A/C en el catálogo público, con slug
+`cctv` e icono `cctv` de Lucide. Utiliza atención a nivel servicio, sin
+requerir unidades, y las mismas reglas de horarios y contacto de ese modo.
+
+## 70.2 Estado de categorías controlado por MySQL
+
+`cat_categorias.activo` es la fuente de verdad para el carrusel y los selectores
+administrativos. Con 0, la categoría se muestra como «Próximamente» sin acción
+en el carrusel y no aparece entre las opciones para asignar servicios. Con 1,
+se puede seleccionar públicamente y aparece en la administración. Se consulta
+al cargar/refrescar la página o los datos del panel; no es una suscripción en vivo.
+El archivo de presentación aporta orden, sinónimos y valores visuales de
+respaldo, pero nunca decide el estado. El nombre y el icono del registro de
+MySQL prevalecen cuando están disponibles. Categorías
+conocidas aún sin registro se muestran como próximas; nuevas filas del catálogo
+se agregan antes de «Más», con icono genérico si no existe un icono compatible.
+
+Si la categoría seleccionada está inactiva, se elige la primera activa; sin
+activas no se muestra un listado asociado a categorías deshabilitadas.
+Desactivar una categoría no borra servicios ni relaciones. Un servicio visible
+con categoría principal inactiva sigue apareciendo y permitiendo contactos
+si tiene otra categoría activa; sin ninguna activa se excluye del directorio
+y del contacto público. Al editar, las relaciones inactivas existentes se
+conservan en servidor sin ofrecerlas como opciones nuevas. No se permite
+asignar nuevas categorías inactivas. No se modifica el modo de operación.
+
+### 70.2.1 Comportamiento por estado
+
+| Valor de `activo` | Carrusel público | Opciones de administración |
+| --- | --- | --- |
+| `0` | Tarjeta «Próximamente», sin selección ni apertura del listado | No se ofrece para asignación ni en el filtro de categorías |
+| `1` | Tarjeta «Disponible», seleccionable aunque todavía no tenga proveedores | Disponible para asignación y filtrado, respetando compatibilidad de modo operativo |
+
+«Disponible» en una tarjeta de categoría indica que la categoría está habilitada;
+no garantiza disponibilidad inmediata de sus proveedores. Una categoría activa
+sin proveedores muestra el estado vacío existente al seleccionarla.
+
+El servidor valida el estado al crear o actualizar asignaciones, incluida la
+API de servicios. Una opción cargada previamente en un panel no permite asignar
+una categoría que después se haya desactivado. Se rechaza la nueva asignación
+sin borrar relaciones históricas. Desactivar y volver a activar una categoría
+no requiere migración, cambios de código ni recrear sus servicios.
+
+### 70.2.2 Criterios de aceptación
+
+1. Cambiar `activo` de 1 a 0 y recargar muestra «Próximamente» y retira la
+   categoría de las opciones administrativas de asignación y filtrado.
+2. Cambiar de 0 a 1 y recargar habilita la selección pública y administrativa.
+3. La desactivación de la categoría principal no oculta al proveedor si conserva
+   otra categoría activa; el proveedor no se duplica ni se multiplican unidades.
+4. Sin categorías activas, el proveedor no aparece en la consulta pública ni
+   permite iniciar contactos públicos; sus datos administrativos se conservan.
+5. Editar un servicio mantiene las relaciones inactivas anteriores sin permitir
+   asignaciones inactivas nuevas ni cambiar su modo de operación.
+6. Sin ninguna categoría activa, el carrusel mantiene las tarjetas próximas y
+   no selecciona una categoría deshabilitada.
+7. El orden visual conserva CCTV después de A/C y «Más» al final.
+
+## 70.3 Espaciado del carrusel de categorías
+
+El carrusel utiliza 4 px de espacio interior horizontal y la misma separación
+para la alineación automática al desplazarse. El borde de selección de la
+primera categoría debe quedar completo, sin el margen anterior de 12 px.
+Emergencias queda fuera de este carrusel y conserva únicamente el acceso
+inferior en la landing, conforme a 68.2.
+
+# 71. Publicidad local no invasiva
+
+La landing incorpora un carrusel independiente de los proveedores, debajo de
+«Próximamente más servicios» y antes del listado, visible aunque se filtren
+categorías. Solo muestra anuncios activos y vigentes de la ciudad activa.
+Sin anuncios no ocupa espacio; uno permanece fijo; dos o más rotan cada seis
+segundos. Permite desplazamiento horizontal nativo con el dedo o trackpad,
+con ajuste a un banner completo al terminar. Los indicadores se sincronizan
+con el desplazamiento; también se puede navegar con las flechas del teclado
+al enfocar el carrusel. Deslizar no debe abrir el enlace del anuncio.
+El desplazamiento es circular: avanzar desde el último lleva al primero y
+retroceder desde el primero lleva al último. Las copias visuales de los extremos
+no crean registros, indicadores ni elementos adicionales de navegación por teclado.
+Tiene indicadores manuales y control de pausa explícita. Deslizar, tocar,
+seleccionar indicadores, enfocar controles o pasar el cursor no detiene la
+rotación automática. Se suspende mientras la pestaña está oculta. Respeta
+movimiento reducido, sin reproducción automática en esa preferencia.
+
+Los banners son imágenes estáticas de proporción 5:1 (recomendado: 1200 × 240 px), sin recorte, con
+etiqueta «Publicidad» fuera de la imagen. La etiqueta, los indicadores y el
+control de pausa solo con icono comparten una fila inferior compacta de 24 px,
+sin cabecera superior y con separación exterior de 8 px. Admiten JPG, PNG o WebP, hasta 3 MB;
+se recomienda menos de 150 KB. Las imágenes se suben a Cloudinary con las
+credenciales existentes. Los enlaces HTTPS pueden llevar a una web o WhatsApp
+mediante `https://wa.me/` con teléfono internacional; no admiten scripts ni
+credenciales en URL. Abren una pestaña nueva con atributos de enlace patrocinado.
+Los anuncios no alteran ranking, disponibilidad ni métricas comerciales.
+
+`dat_anuncios` guarda ciudad, título accesible, URL de imagen, URL de destino,
+orden, activo, fechas opcionales de inicio/fin y fechas de auditoría. Vigencia
+por días completos inclusivos en la zona horaria de la ciudad; campos vacíos
+sin límite. Orden ascendente y desempate por id. Los nuevos anuncios se crean
+ocultos por defecto. Administración protegida con la clave actual permite
+crear, editar, reemplazar imagen, ordenar, activar y ocultar. No se requieren
+nuevas dependencias ni variables de entorno. La consulta publicitaria fallida
+no bloquea el directorio.
+
+## 71.1 Administración y carga inicial
+
+La gestión está disponible en `/admin/publicidad`, enlazada desde `/admin`
+como «Administrar publicidad», con la misma clave administrativa. Permite
+seleccionar ciudad, subir imágenes desde el equipo, definir título y destino,
+cambiar orden y vigencia, y activar u ocultar anuncios. El panel sube la imagen
+a Cloudinary y guarda sus datos en MySQL; no exige utilizar directamente esas
+herramientas después de crear la tabla. Editar sin una imagen nueva conserva
+la anterior. Ocultar no elimina el anuncio ni su imagen.
+
+La migración `drizzle/0009_sloppy_yellowjacket.sql` crea `dat_anuncios`, su llave
+foránea a `cat_ciudades` y el índice de ciudad, activo y orden.
+`docs/sql/crear-publicidad.sql` permite crear solo la tabla;
+`docs/sql/instalar-publicidad.sql` crea la tabla y registra los dos anuncios
+iniciales en Tonalá, activos, sin fechas límite y sin duplicarlos al repetir
+secuencialmente el script. Se utiliza `CREATE TABLE IF NOT EXISTS` para permitir
+el registro posterior de esta migración en Drizzle tras la instalación manual.
+
+Las imágenes iniciales ya fueron recibidas y subidas a Cloudinary:
+
+- Servitec: `banner_publicidad_servitec.jpeg`, con destino a
+  `https://www.servitec-tonala.es/promociones/sitio-web-999`.
+- Servicios: `banner_publicidad_somos_servicios.jpeg`, con destino al WhatsApp
+  configurado para «Quiero publicar mi servicio», incluido su mensaje.
+
+La versión anterior `banner_publicidad_servicios.jpeg` fue sustituida por la
+última imagen indicada por el usuario. Los enlaces exactos de imágenes y
+contacto están en el script de instalación. El enlace de WhatsApp se guarda en
+el anuncio; cambiar la configuración general no lo reescribe automáticamente.
+La tabla y la carga inicial se entregaron para ejecución manual del usuario;
+esta documentación no confirma su aplicación a la base ni un despliegue.
+Las instrucciones operativas y de revisión están en `docs/PUBLICIDAD.md`.
