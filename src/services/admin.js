@@ -12,6 +12,9 @@ import {
   datHorariosUnidad,
   datUnidades,
   relServiciosCategorias,
+  logContactos,
+  logEventosAnalitica,
+  logEstadosUnidad,
 } from "@/db/schema";
 import { hashUnitToken } from "@/lib/unit-token";
 import { UnitPanelError, updateUnitStatusById } from "@/services/units";
@@ -116,10 +119,11 @@ export async function getAdminSnapshot() {
       operationMode: datServicios.modoOperacion,
       coverage: datServicios.coberturaTexto,
       logoUrl: datServicios.logoUrl,
-      cashPayment: datServicios.pagoEfectivo,
-      cardPayment: datServicios.pagoTarjeta,
-      transferPayment: datServicios.pagoTransferencia,
-      visible: datServicios.visible,
+       cashPayment: datServicios.pagoEfectivo,
+       cardPayment: datServicios.pagoTarjeta,
+       transferPayment: datServicios.pagoTransferencia,
+       destacado: datServicios.destacado,
+       visible: datServicios.visible,
     }).from(datServicios).innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId)).innerJoin(catCategorias, eq(catCategorias.id, datServicios.categoriaId)).orderBy(asc(datServicios.nombre)),
     db.select({
       id: datUnidades.id,
@@ -164,9 +168,10 @@ export async function getAdminSnapshot() {
       ...service,
       visible: Boolean(service.visible),
       requiresUnits: service.operationMode === "unidades",
-      cashPayment: Boolean(service.cashPayment),
-      cardPayment: Boolean(service.cardPayment),
-      transferPayment: Boolean(service.transferPayment),
+       cashPayment: Boolean(service.cashPayment),
+       cardPayment: Boolean(service.cardPayment),
+       transferPayment: Boolean(service.transferPayment),
+       destacado: Boolean(service.destacado),
       schedule: schedulesByService.get(service.id) ?? [],
       categoryIds: (categoriesByService.get(service.id) ?? [{ categoryId: service.categoryId }]).map((category) => category.categoryId),
       categoryNames: (categoriesByService.get(service.id) ?? [{ categoryName: service.categoryName }]).map((category) => category.categoryName),
@@ -208,6 +213,7 @@ function serviceValues(input) {
     cashPayment: boolean(input.cashPayment, "Pago en efectivo"),
     cardPayment: boolean(input.cardPayment, "Pago con tarjeta"),
     transferPayment: boolean(input.transferPayment, "Pago por transferencia"),
+    destacado: input.destacado !== undefined ? boolean(input.destacado, "Servicio prioritario") : false,
   };
 }
 
@@ -236,7 +242,7 @@ function duplicateError(error) {
   return error?.code === "ER_DUP_ENTRY" || error?.cause?.code === "ER_DUP_ENTRY";
 }
 
-export async function createProvider(input) {
+export async function createProvider(input, requestUrl) {
   const cityId = requiredId(input.cityId, "Ciudad");
   const contactModeId = requiredId(input.contactModeId, "Modo de contacto");
   const categoryIds = normalizeCategoryIds(input.categoryIds);
@@ -246,7 +252,7 @@ export async function createProvider(input) {
   try {
     return await getDb().transaction(async (tx) => {
       await activeCatalogRecord(tx, catCiudades, cityId, "La ciudad");
-      const [contactMode] = await tx.select({ key: catModosContacto.clave }).from(catModosContacto).where(and(eq(catModosContacto.id, contactModeId), eq(catModosContacto.activo, true))).limit(1);
+      const [contactMode] = await tx.select({ key: catModosContacto.clave, cityName: catCiudades.nombre }).from(catModosContacto).innerJoin(catCiudades, eq(catCiudades.id, cityId)).where(and(eq(catModosContacto.id, contactModeId), eq(catModosContacto.activo, true))).limit(1);
       if (!contactMode) throw new AdminError("invalid_relation", "El modo de contacto no existe o está inactivo.");
       const categorySelection = await validatedCategories(tx, categoryIds);
       if (!categorySelection.requiresUnits && contactMode.key !== "central") throw new AdminError("invalid_contact_mode", "Los servicios sin unidades requieren contacto central.");
@@ -263,17 +269,20 @@ export async function createProvider(input) {
         informacionExtendida: service.extendedInformation,
         modoOperacion: categorySelection.requiresUnits ? "unidades" : "servicio",
         coberturaTexto: service.coverage,
-        pagoEfectivo: service.cashPayment,
-        pagoTarjeta: service.cardPayment,
-        pagoTransferencia: service.transferPayment,
-        visible: true,
+         pagoEfectivo: service.cashPayment,
+         pagoTarjeta: service.cardPayment,
+         pagoTransferencia: service.transferPayment,
+         destacado: service.destacado,
+         visible: true,
       });
       const serviceId = Number(createdService.insertId);
       await tx.insert(relServiciosCategorias).values(categorySelection.ids.map((categoriaId) => ({ servicioId: serviceId, categoriaId })));
       if (!categorySelection.requiresUnits && schedule.length) await tx.insert(datHorariosServicio).values(schedule.map((item) => ({ servicioId: serviceId, diaSemana: item.day, bloque: item.block, horaInicio: item.start, horaFin: item.end })));
-      if (!categorySelection.requiresUnits) return serviceId;
+      if (!categorySelection.requiresUnits) return { serviceId, access: null };
       const unit = unitValues(input.unit ?? {});
       const state = await unavailableState(tx);
+      const token = randomBytes(32).toString("base64url");
+      const tokenHash = hashUnitToken(token);
       await tx.insert(datUnidades).values({
         servicioId: serviceId,
         nombre: unit.name,
@@ -282,10 +291,121 @@ export async function createProvider(input) {
         precioBase: unit.priceBase,
         estadoId: state.id,
         estadoHasta: null,
-        tokenHash: null,
+        tokenHash,
         activo: true,
       });
-      return serviceId;
+      const privateUrl = new URL(`/u/${token}`, requestUrl).toString();
+      const whatsapp = normalizedWhatsapp(unit.whatsapp) ?? normalizedWhatsapp(service.whatsapp) ?? normalizedWhatsapp(service.phone);
+      const message = `Hola.\n\nEste es tu enlace privado para actualizar tu disponibilidad y precio en Servicios ${contactMode.cityName}:\n\n${privateUrl}\n\n⚠️ Guárdalo muy bien y no lo pierdas, ya que es tu único acceso administrativo. Si lo pierdes, deberás contactar al administrador para que te proporcione uno nuevo.`;
+
+      return {
+        serviceId,
+        access: {
+          privateUrl,
+          whatsappUrl: whatsapp ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}` : null,
+        },
+      };
+    });
+  } catch (error) {
+    if (error instanceof AdminError) throw error;
+    if (duplicateError(error)) throw new AdminError("slug_conflict", "Ya existe un servicio con ese nombre en la ciudad.", 409);
+    throw error;
+  }
+}
+
+export async function deleteService(serviceIdValue) {
+  const serviceId = requiredId(serviceIdValue, "Servicio");
+  const db = getDb();
+  await db.transaction(async (tx) => {
+    const [service] = await tx.select({ id: datServicios.id }).from(datServicios).where(eq(datServicios.id, serviceId)).limit(1);
+    if (!service) throw new AdminError("service_not_found", "El servicio no existe.", 404);
+
+    const units = await tx.select({ id: datUnidades.id }).from(datUnidades).where(eq(datUnidades.servicioId, serviceId));
+    const unitIds = units.map((u) => u.id);
+
+    if (unitIds.length) {
+      for (const unitId of unitIds) {
+        await tx.delete(datHorariosUnidad).where(eq(datHorariosUnidad.unidadId, unitId));
+        await tx.delete(logEstadosUnidad).where(eq(logEstadosUnidad.unidadId, unitId));
+      }
+      await tx.update(logContactos).set({ unidadId: null }).where(inArray(logContactos.unidadId, unitIds));
+      await tx.delete(datUnidades).where(eq(datUnidades.servicioId, serviceId));
+    }
+
+    await tx.update(logContactos).set({ servicioId: null }).where(eq(logContactos.servicioId, serviceId));
+    await tx.update(logEventosAnalitica).set({ servicioId: null }).where(eq(logEventosAnalitica.servicioId, serviceId));
+
+    await tx.delete(datHorariosServicio).where(eq(datHorariosServicio.servicioId, serviceId));
+    await tx.delete(relServiciosCategorias).where(eq(relServiciosCategorias.servicioId, serviceId));
+    await tx.delete(datServicios).where(eq(datServicios.id, serviceId));
+  });
+}
+
+export async function registerProvider(input, requestUrl) {
+  const cityId = requiredId(input.cityId, "Ciudad");
+  const contactModeId = requiredId(input.contactModeId, "Modo de contacto");
+  const categoryIds = normalizeCategoryIds(input.categoryIds);
+  const service = serviceValues(input.service ?? {});
+  const schedule = serviceSchedule(input.service?.schedule ?? []);
+
+  try {
+    return await getDb().transaction(async (tx) => {
+      await activeCatalogRecord(tx, catCiudades, cityId, "La ciudad");
+      const [contactMode] = await tx.select({ key: catModosContacto.clave }).from(catModosContacto).where(and(eq(catModosContacto.id, contactModeId), eq(catModosContacto.activo, true))).limit(1);
+      if (!contactMode) throw new AdminError("invalid_relation", "El modo de contacto no existe o está inactivo.");
+      const categorySelection = await validatedCategories(tx, categoryIds);
+      if (!categorySelection.requiresUnits && contactMode.key !== "central") throw new AdminError("invalid_contact_mode", "Los servicios sin unidades requieren contacto central.");
+
+      const token = randomBytes(32).toString("base64url");
+      const tokenHash = hashUnitToken(token);
+      const requiresUnits = categorySelection.requiresUnits;
+
+      const [createdService] = await tx.insert(datServicios).values({
+        ciudadId: cityId,
+        modoContactoId: contactModeId,
+        categoriaId: categorySelection.ids[0],
+        nombre: service.name,
+        slug: slugify(service.name),
+        telefono: service.phone,
+        whatsapp: service.whatsapp,
+        descripcion: service.extendedInformation,
+        informacionCorta: service.shortInformation,
+        informacionExtendida: service.extendedInformation,
+        modoOperacion: requiresUnits ? "unidades" : "servicio",
+        coberturaTexto: service.coverage,
+        pagoEfectivo: service.cashPayment,
+        pagoTarjeta: service.cardPayment,
+        pagoTransferencia: service.transferPayment,
+        destacado: false,
+        tokenHash: requiresUnits ? null : tokenHash,
+        visible: true,
+      });
+      const serviceId = Number(createdService.insertId);
+      await tx.insert(relServiciosCategorias).values(categorySelection.ids.map((categoriaId) => ({ servicioId: serviceId, categoriaId })));
+
+      if (!requiresUnits) {
+        if (schedule.length) {
+          await tx.insert(datHorariosServicio).values(schedule.map((item) => ({ servicioId: serviceId, diaSemana: item.day, bloque: item.block, horaInicio: item.start, horaFin: item.end })));
+        }
+        const privateUrl = new URL(`/u/${token}`, requestUrl).toString();
+        return { serviceId, privateUrl };
+      }
+
+      const unit = unitValues(input.unit ?? {});
+      const state = await unavailableState(tx);
+      await tx.insert(datUnidades).values({
+        servicioId: serviceId,
+        nombre: unit.name || "Unidad 1",
+        telefono: unit.phone || service.phone,
+        whatsapp: unit.whatsapp || service.whatsapp,
+        precioBase: unit.priceBase,
+        estadoId: state.id,
+        estadoHasta: null,
+        tokenHash,
+        activo: true,
+      });
+      const privateUrl = new URL(`/u/${token}`, requestUrl).toString();
+      return { serviceId, privateUrl };
     });
   } catch (error) {
     if (error instanceof AdminError) throw error;
@@ -339,10 +459,11 @@ export async function updateService(serviceIdValue, input) {
       informacionExtendida: values.extendedInformation,
       modoOperacion: nextOperationMode,
       coberturaTexto: values.coverage,
-      pagoEfectivo: values.cashPayment,
-      pagoTarjeta: values.cardPayment,
-      pagoTransferencia: values.transferPayment,
-      visible: boolean(input.visible, "Visibilidad"),
+       pagoEfectivo: values.cashPayment,
+       pagoTarjeta: values.cardPayment,
+       pagoTransferencia: values.transferPayment,
+       destacado: values.destacado,
+       visible: boolean(input.visible, "Visibilidad"),
     }).where(eq(datServicios.id, serviceId));
     if (!result[0].affectedRows) throw new AdminError("service_not_found", "El servicio no existe.", 404);
     await tx.delete(relServiciosCategorias).where(eq(relServiciosCategorias.servicioId, serviceId));
@@ -428,7 +549,7 @@ export async function rotateUnitAccess(serviceIdValue, unitIdValue, requestUrl) 
   await db.update(datUnidades).set({ tokenHash }).where(and(eq(datUnidades.id, unitId), eq(datUnidades.servicioId, serviceId)));
   const privateUrl = new URL(`/u/${token}`, requestUrl).toString();
   const whatsapp = normalizedWhatsapp(unit.unitWhatsapp) ?? normalizedWhatsapp(unit.serviceWhatsapp) ?? normalizedWhatsapp(unit.servicePhone);
-  const message = `Hola.\n\nEste es tu enlace privado para actualizar tu disponibilidad y precio en Servicios ${unit.cityName}:\n\n${privateUrl}\n\nGuárdalo, ya que desde este enlace podrás indicar si estás disponible, ocupado o fuera de servicio.`;
+  const message = `Hola.\n\nEste es tu enlace privado para actualizar tu disponibilidad y precio en Servicios ${unit.cityName}:\n\n${privateUrl}\n\n⚠️ Guárdalo muy bien y no lo pierdas, ya que es tu único acceso administrativo. Si lo pierdes, deberás contactar al administrador para que te proporcione uno nuevo.`;
 
   return {
     privateUrl,

@@ -131,7 +131,7 @@ export default async function CityPage({ params }) {
 
         <HowItWorks />
         <LocalSeoContent city={city} />
-        <PilotInvitation />
+        <PilotInvitation citySlug={city.slug} />
         <SiteFooter compact />
 
       </div>

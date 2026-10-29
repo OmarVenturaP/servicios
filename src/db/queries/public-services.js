@@ -65,6 +65,7 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
       cashPayment: datServicios.pagoEfectivo,
       cardPayment: datServicios.pagoTarjeta,
       transferPayment: datServicios.pagoTransferencia,
+      destacado: datServicios.destacado,
       availableUnits,
       occupiedUnits,
       priceFrom: minimumAvailablePrice,
@@ -91,8 +92,10 @@ export const getPublicServicesByCity = cache(async function getPublicServicesByC
       datServicios.pagoEfectivo,
       datServicios.pagoTarjeta,
       datServicios.pagoTransferencia,
+      datServicios.destacado,
     )
     .orderBy(
+      desc(datServicios.destacado),
       desc(sql`(${availableUnits}) > 0`),
       asc(sql`rand()`),
     );

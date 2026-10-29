@@ -33,7 +33,7 @@ export default function AdvertisementCarousel({ ads = [] }) {
     return () => { media.removeEventListener("change", updateMotion); document.removeEventListener("visibilitychange", updateVisibility); };
   }, []);
 
-  const goToAd = useCallback((position) => {
+  const goToAd = (position) => {
     const viewport = viewportRef.current;
     if (!viewport || !visibleAds.length) return;
     const slot = adSlotForIndex(position, visibleAds.length);
@@ -41,7 +41,7 @@ export default function AdvertisementCarousel({ ads = [] }) {
     indexRef.current = next;
     setIndex(next);
     viewport.scrollTo({ left: viewport.clientWidth * slot, behavior: reducedMotion ? "instant" : "smooth" });
-  }, [visibleAds.length, reducedMotion]);
+  };
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -85,7 +85,9 @@ export default function AdvertisementCarousel({ ads = [] }) {
 
   useEffect(() => {
     if (visibleAds.length < 2 || paused || hidden || reducedMotion) return;
-    const timer = window.setInterval(() => goToAd(indexRef.current + 1), AD_INTERVAL_MS);
+    const timer = window.setInterval(() => {
+      goToAd(indexRef.current + 1);
+    }, AD_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [visibleAds.length, paused, hidden, reducedMotion, goToAd]);
 

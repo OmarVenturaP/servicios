@@ -3,6 +3,7 @@ import {
   addUnit,
   AdminError,
   createProvider,
+  deleteService,
   getAdminSnapshot,
   rotateUnitAccess,
   updateAdminUnit,
@@ -25,7 +26,13 @@ export async function POST(request) {
       case "bootstrap":
         break;
       case "create_provider":
-        selectedServiceId = await createProvider(body.data ?? {});
+        const creation = await createProvider(body.data ?? {}, request.url);
+        selectedServiceId = creation.serviceId;
+        access = creation.access;
+        break;
+      case "delete_service":
+        await deleteService(body.serviceId);
+        selectedServiceId = null;
         break;
       case "update_service":
         await updateService(body.serviceId, body.data ?? {});

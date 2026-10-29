@@ -117,6 +117,8 @@ export const datServicios = mysqlTable(
     pagoTarjeta: boolean("pago_tarjeta").default(false).notNull(),
     pagoTransferencia: boolean("pago_transferencia").default(false).notNull(),
     visible: boolean("visible").default(true).notNull(),
+    destacado: boolean("destacado").default(false).notNull(),
+    tokenHash: char("token_hash", { length: 64 }),
     participaPiloto: boolean("participa_piloto").default(false).notNull(),
     fuente: varchar("fuente", { length: 80 }),
     notas: text("notas"),
@@ -125,6 +127,7 @@ export const datServicios = mysqlTable(
   },
   (table) => [
     uniqueIndex("uq_dat_servicios_ciudad_slug").on(table.ciudadId, table.slug),
+    uniqueIndex("uq_dat_servicios_token_hash").on(table.tokenHash),
     index("idx_dat_servicios_modo_contacto").on(table.modoContactoId),
     index("idx_dat_servicios_categoria").on(table.ciudadId, table.categoriaId, table.visible),
     index("idx_dat_servicios_publicos").on(table.ciudadId, table.visible),

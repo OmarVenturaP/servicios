@@ -36,6 +36,11 @@ const categoriaCatalogo = [
   { nombre: "Plomería", slug: "plomeria", icono: "droplet", requiereUnidades: false },
   { nombre: "Fletes", slug: "fletes", icono: "package", requiereUnidades: false },
   { nombre: "Limpieza", slug: "limpieza", icono: "sparkles", requiereUnidades: false },
+  { nombre: "Contadores", slug: "contadores", icono: "briefcase", requiereUnidades: false },
+  { nombre: "Licenciados", slug: "licenciados", icono: "scale", requiereUnidades: false },
+  { nombre: "Médicos", slug: "medicos", icono: "stethoscope", requiereUnidades: false },
+  { nombre: "Refaccionarias", slug: "refaccionarias", icono: "wrench", requiereUnidades: false },
+  { nombre: "Ferreterías", slug: "ferreterias", icono: "hammer", requiereUnidades: false },
 ];
 
 const serviciosDesarrollo = [

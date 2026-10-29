@@ -1,0 +1,1 @@
+ALTER TABLE `dat_servicios` ADD `destacado` boolean DEFAULT false NOT NULL;

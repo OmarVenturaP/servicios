@@ -71,6 +71,20 @@
       "when": 1791406963459,
       "tag": "0009_sloppy_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1793220828713,
+      "tag": "0010_certain_edwin_jarvis",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1793246350474,
+      "tag": "0011_strong_slayback",
+      "breakpoints": true
     }
   ]
 }

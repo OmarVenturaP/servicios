@@ -1,12 +1,17 @@
 import { connection } from "next/server";
 import { Link2Off } from "lucide-react";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { catCiudades, datServicios, datHorariosServicio } from "@/db/schema";
 import BrandMark from "@/components/BrandMark";
 import UnitStatusPanel from "@/components/UnitStatusPanel";
+import ServicePanel from "@/components/ServicePanel";
 import ProviderAnalyticsSignal from "@/components/ProviderAnalyticsSignal";
 import { resolveUnitPanel } from "@/services/units";
+import { hashUnitToken } from "@/lib/unit-token";
 
 export const metadata = {
-  title: "Panel privado de unidad",
+  title: "Panel privado de servicio",
   robots: { index: false, follow: false },
 };
 
@@ -30,14 +35,67 @@ function InvalidLink() {
 export default async function UnitPage({ params }) {
   await connection();
   const { token } = await params;
-  const unit = await resolveUnitPanel(token);
+  const tokenHash = hashUnitToken(token);
+  if (!tokenHash) return <InvalidLink />;
 
-  if (!unit) return <InvalidLink />;
+  const db = getDb();
+
+  // 1. Check if it's a unit panel
+  const unit = await resolveUnitPanel(token);
+  if (unit) {
+    return (
+      <div className="min-h-screen bg-[#eef1f6] py-0 sm:py-8">
+        <ProviderAnalyticsSignal token={token} />
+        <UnitStatusPanel token={token} initialUnit={unit} />
+      </div>
+    );
+  }
+
+  // 2. Check if it's a general service panel
+  const [serviceRecord] = await db
+    .select({
+      id: datServicios.id,
+      name: datServicios.nombre,
+      cityName: catCiudades.nombre,
+      phone: datServicios.telefono,
+      whatsapp: datServicios.whatsapp,
+      shortInformation: datServicios.informacionCorta,
+      extendedInformation: datServicios.informacionExtendida,
+      coverage: datServicios.coberturaTexto,
+      cashPayment: datServicios.pagoEfectivo,
+      cardPayment: datServicios.pagoTarjeta,
+      transferPayment: datServicios.pagoTransferencia,
+    })
+    .from(datServicios)
+    .innerJoin(catCiudades, eq(catCiudades.id, datServicios.ciudadId))
+    .where(eq(datServicios.tokenHash, tokenHash))
+    .limit(1);
+
+  if (!serviceRecord) return <InvalidLink />;
+
+  const scheduleRows = await db
+    .select({
+      day: datHorariosServicio.diaSemana,
+      block: datHorariosServicio.bloque,
+      start: datHorariosServicio.horaInicio,
+      end: datHorariosServicio.horaFin,
+    })
+    .from(datHorariosServicio)
+    .where(eq(datHorariosServicio.servicioId, serviceRecord.id))
+    .orderBy(datHorariosServicio.diaSemana, datHorariosServicio.bloque);
+
+  const initialService = {
+    ...serviceRecord,
+    cashPayment: Boolean(serviceRecord.cashPayment),
+    cardPayment: Boolean(serviceRecord.cardPayment),
+    transferPayment: Boolean(serviceRecord.transferPayment),
+    schedule: scheduleRows,
+  };
 
   return (
     <div className="min-h-screen bg-[#eef1f6] py-0 sm:py-8">
       <ProviderAnalyticsSignal token={token} />
-      <UnitStatusPanel token={token} initialUnit={unit} />
+      <ServicePanel token={token} initialService={initialService} />
     </div>
   );
 }

@@ -37,7 +37,7 @@ const questions = [
   },
   {
     question: "¿Cómo puedo publicar mi servicio?",
-    answer: "Durante el piloto puedes solicitar información por WhatsApp. El equipo revisará contigo los datos operativos necesarios antes de publicar el servicio.",
+    answer: "Puedes registrar tu servicio sin ningún costo. Cada proveedor cuenta con su propio panel administrativo privado para gestionar su información, unidades y precios, mientras que el panel master central administra la plataforma.",
   },
 ];
 

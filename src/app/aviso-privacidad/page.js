@@ -27,7 +27,7 @@ export default function PrivacyPage() {
       <p>La versión actual no solicita al cliente ubicación GPS, tarjeta bancaria, contraseña, documentos oficiales, pagos ni ubicación en tiempo real.</p>
 
       <h2>4. Finalidades</h2>
-      <p>La información puede utilizarse para mostrar servicios disponibles, facilitar el contacto, operar la disponibilidad, administrar unidades, mostrar precios, mejorar el funcionamiento del producto, generar estadísticas agregadas, prevenir abuso y brindar soporte al piloto.</p>
+      <p>La información puede utilizarse para mostrar servicios disponibles, facilitar el contacto, operar la disponibilidad, administrar unidades, mostrar precios, mejorar el funcionamiento del producto, generar estadísticas agregadas, prevenir abuso y brindar soporte.</p>
 
       <h2>5. Comunicación con terceros</h2>
       <p>Cuando eliges WhatsApp o llamada, la comunicación ocurre mediante proveedores externos. <strong>Servicios</strong> no controla sus políticas ni el tratamiento que esas plataformas realizan conforme a sus propios términos.</p>

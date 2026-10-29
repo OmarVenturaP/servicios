@@ -7,5 +7,10 @@ export const serviceCategories = [
   { key: "plomeria", name: "Plomería", keywords: ["plomero", "plomeros", "plomería", "cañería", "fugas"], icon: "droplet", published: true, indexable: false },
   { key: "fletes", name: "Fletes", keywords: ["flete", "fletes", "carga", "mudanza", "mudanzas"], icon: "package", published: true, indexable: false },
   { key: "limpieza", name: "Limpieza", keywords: ["limpieza", "limpiezas", "limpiador", "limpiadores"], icon: "sparkles", published: true, indexable: false },
+  { key: "contadores", name: "Contadores", keywords: ["contador", "contadores", "contabilidad", "fiscal", "impuestos"], icon: "briefcase", published: true, indexable: false },
+  { key: "licenciados", name: "Licenciados", keywords: ["licenciado", "licenciados", "abogado", "abogados", "juridico", "legal"], icon: "scale", published: true, indexable: false },
+  { key: "medicos", name: "Médicos", keywords: ["medico", "medicos", "medicina", "doctor", "doctores", "salud"], icon: "stethoscope", published: true, indexable: false },
+  { key: "refaccionarias", name: "Refaccionarias", keywords: ["refaccionaria", "refaccionarias", "refacciones", "autopartes", "piezas"], icon: "wrench", published: true, indexable: false },
+  { key: "ferreterias", name: "Ferreterías", keywords: ["ferreteria", "ferreterías", "ferretería", "herramientas", "construccion"], icon: "hammer", published: true, indexable: false },
   { key: "mas-servicios", name: "Más", keywords: ["mas", "más", "otros", "otro", "proximamente", "próximamente"], icon: "ellipsis" },
 ];

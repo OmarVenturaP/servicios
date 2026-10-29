@@ -58,8 +58,8 @@ export default function TermsPage() {
       <h2>12. Suspensión o eliminación</h2>
       <p><strong>Servicios</strong> podrá limitar, ocultar o retirar información cuando existan motivos razonables relacionados con fraude, abuso, información falsa, uso indebido, seguridad, cumplimiento legal o incumplimiento de las reglas de la plataforma.</p>
 
-      <h2>13. Piloto y posibles costos para prestadores</h2>
-      <p>La plataforma operará un piloto durante septiembre de 2026. La participación durante este periodo permitirá evaluar el funcionamiento y los resultados reales del servicio. Al concluir el piloto, <strong>Servicios</strong> podrá establecer un pequeño costo de participación para los prestadores, definido con base en los datos obtenidos y comunicado previamente antes de que resulte aplicable. Ningún cobro posterior se aplicará de manera automática o retroactiva sin informar sus condiciones.</p>
+      <h2>13. Registro sin costo y paneles administrativos</h2>
+      <p>El registro y uso de <strong>Servicios</strong> es 100% gratuito y sin ningún costo para los prestadores. Cada proveedor cuenta con su propio panel administrativo para gestionar su información, unidades y precios, mientras que la administración general y la supervisión del sistema son operadas de forma centralizada por el administrador master de la plataforma.</p>
 
       <h2>14. Modificaciones</h2>
       <p>Estos términos pueden actualizarse cuando sea necesario. La versión vigente se mantendrá publicada en esta misma URL.</p>

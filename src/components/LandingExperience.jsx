@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bike, Cctv, Check, ChevronRight, Droplet, Ellipsis, Package, PlugZap, Search, Snowflake, Sparkles, Wrench, X } from "lucide-react";
+import { Bike, Briefcase, Cctv, Check, ChevronRight, Droplet, Ellipsis, Hammer, Package, PlugZap, Scale, Search, Snowflake, Sparkles, Stethoscope, Wrench, X } from "lucide-react";
 import ServiceList from "./ServiceList";
 import AdvertisementCarousel from "./AdvertisementCarousel";
 import { selectedActiveCategory } from "@/domain/service-categories";
@@ -17,6 +17,10 @@ const categoryIcons = {
   cctv: Cctv,
   sparkles: Sparkles,
   wrench: Wrench,
+  briefcase: Briefcase,
+  scale: Scale,
+  stethoscope: Stethoscope,
+  hammer: Hammer,
 };
 
 function normalize(value) {
@@ -60,6 +64,11 @@ export default function LandingExperience({ citySlug, cityName, services, totals
   const orderedServices = useMemo(() => (
     sortMode === "price" ? sortByPrice(selectedServices) : selectedServices
   ), [selectedServices, sortMode]);
+  const currentKey = `${activeCategoryKey}-${sortMode}-${query}`;
+  const [filterState, setFilterState] = useState({ key: currentKey, limit: 6 });
+  const visibleLimit = filterState.key === currentKey ? filterState.limit : 6;
+  const slicedServices = useMemo(() => orderedServices.slice(0, visibleLimit), [orderedServices, visibleLimit]);
+  const hasMore = orderedServices.length > visibleLimit;
   const availabilityLabel = totals.availableUnits === 1
     ? "1 repartidor disponible ahora"
     : `${totals.availableUnits} repartidores disponibles ahora`;
@@ -146,7 +155,16 @@ export default function LandingExperience({ citySlug, cityName, services, totals
               })}
             </div> : null}
             <div className="mt-3">
-              <ServiceList citySlug={citySlug} services={orderedServices} categoryName={selectedCategoryConfig.name} categoryIcon={selectedCategoryConfig.icon} />
+              <ServiceList citySlug={citySlug} services={slicedServices} categoryName={selectedCategoryConfig.name} categoryIcon={selectedCategoryConfig.icon} />
+              {hasMore ? (
+                <button
+                  type="button"
+                  onClick={() => setFilterState({ key: currentKey, limit: visibleLimit + 6 })}
+                  className="brand-soft-surface mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-extrabold text-[var(--brand-blue)] shadow-sm transition hover:bg-[var(--brand-blue)]/5"
+                >
+                  Ver más servicios ({orderedServices.length - visibleLimit} más)
+                </button>
+              ) : null}
             </div>
           </section >
         ) : null

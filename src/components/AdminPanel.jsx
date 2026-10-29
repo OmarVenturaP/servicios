@@ -214,7 +214,7 @@ export default function AdminPanel() {
     try {
       await execute("bootstrap");
       setFeedback(null);
-    } catch {}
+    } catch { }
   }
 
   async function createProviderFromForm(event) {
@@ -222,29 +222,32 @@ export default function AdminPanel() {
     const form = event.currentTarget;
     const values = formValues(form);
     try {
-      const result = await execute("create_provider", { data: {
-        cityId: values.cityId,
-        contactModeId: values.contactModeId,
-        categoryIds: new FormData(form).getAll("categoryIds"),
-        service: {
-          name: values["service.name"],
-          phone: values["service.phone"],
-          whatsapp: values["service.whatsapp"],
-          coverage: values["service.coverage"],
-          shortInformation: values["service.shortInformation"],
-          extendedInformation: values["service.extendedInformation"],
-          schedule: values.schedule,
-          cashPayment: values["service.cashPayment"] === "true",
-          cardPayment: values["service.cardPayment"] === "true",
-          transferPayment: values["service.transferPayment"] === "true",
-        },
-        unit: {
-          name: values["unit.name"],
-          phone: values["unit.phone"],
-          whatsapp: values["unit.whatsapp"],
-          priceBase: values["unit.priceBase"],
-        },
-      } });
+      const result = await execute("create_provider", {
+        data: {
+          cityId: values.cityId,
+          contactModeId: values.contactModeId,
+          categoryIds: new FormData(form).getAll("categoryIds"),
+          service: {
+            name: values["service.name"],
+            phone: values["service.phone"],
+            whatsapp: values["service.whatsapp"],
+            coverage: values["service.coverage"],
+            shortInformation: values["service.shortInformation"],
+            extendedInformation: values["service.extendedInformation"],
+            schedule: values.schedule,
+            cashPayment: values["service.cashPayment"] === "true",
+            cardPayment: values["service.cardPayment"] === "true",
+            transferPayment: values["service.transferPayment"] === "true",
+            destacado: values["service.destacado"] === "true",
+          },
+          unit: {
+            name: values["unit.name"],
+            phone: values["unit.phone"],
+            whatsapp: values["unit.whatsapp"],
+            priceBase: values["unit.priceBase"],
+          },
+        }
+      });
       form.reset();
       setCreateCategoryIds([]);
       setShowCreate(false);
@@ -252,6 +255,7 @@ export default function AdminPanel() {
       setSelectedServiceId(result.selectedServiceId);
       const createdService = result.data.services.find((service) => service.id === result.selectedServiceId);
       setSelectedUnitId(createdService?.units[0]?.id ?? null);
+      if (result.access) setGeneratedAccess(result.access);
       if (createLogo.file) {
         try {
           await uploadLogo(result.selectedServiceId, createLogo.file);
@@ -263,7 +267,7 @@ export default function AdminPanel() {
         setFeedback({ type: "success", message: createdService?.requiresUnits ? "Proveedor y primera unidad creados." : "Proveedor creado correctamente." });
       }
       setCreateLogo({ file: null, preview: null });
-    } catch {}
+    } catch { }
   }
 
   async function addUnitFromForm(event) {
@@ -279,7 +283,7 @@ export default function AdminPanel() {
       const updatedService = result.data.services.find((service) => service.id === selectedService.id);
       setSelectedUnitId(updatedService?.units.at(-1)?.id ?? null);
       setFeedback({ type: "success", message: "Unidad creada correctamente." });
-    } catch {}
+    } catch { }
   }
 
   async function updateServiceFromForm(event) {
@@ -287,16 +291,18 @@ export default function AdminPanel() {
     const form = event.currentTarget;
     const values = formValues(form);
     try {
-      await execute("update_service", { serviceId: selectedService.id, data: {
-        ...values,
-        categoryIds: new FormData(form).getAll("categoryIds"),
-        visible: values.visible === "true",
-        cashPayment: values.cashPayment === "true",
-        cardPayment: values.cardPayment === "true",
-        transferPayment: values.transferPayment === "true",
-      } });
+      await execute("update_service", {
+        serviceId: selectedService.id, data: {
+          ...values,
+          categoryIds: new FormData(form).getAll("categoryIds"),
+          visible: values.visible === "true",
+          cashPayment: values.cashPayment === "true",
+          cardPayment: values.cardPayment === "true",
+          transferPayment: values.transferPayment === "true",
+        }
+      });
       setFeedback({ type: "success", message: "Servicio actualizado." });
-    } catch {}
+    } catch { }
   }
 
   function openService(service) {
@@ -344,6 +350,7 @@ export default function AdminPanel() {
           <FormField label="Información extendida" name="service.extendedInformation"><textarea className={`${inputClass} min-h-28 py-3`} name="service.extendedInformation" maxLength={4000} /></FormField>
           <FormField label="Cobertura" name="service.coverage" />
           <PaymentFields />
+          <label className="flex min-h-11 items-center gap-3 text-sm font-bold text-slate-700"><input type="checkbox" name="service.destacado" value="true" className="size-5" /> Servicio prioritario / promocionado (aparece aleatoriamente al inicio)</label>
           {createHasCategories && !createRequiresUnits ? <ScheduleFields /> : null}
           <LogoPicker value={createLogo} onChange={(event) => selectLogo(event, setCreateLogo)} disabled={pending} />
           {createHasCategories && createRequiresUnits ? <><h2 className="mt-2 border-t border-slate-200 pt-5 text-lg font-black text-slate-950">Primera unidad</h2><FormField label="Nombre opcional" name="unit.name" /><FormField label="Teléfono" name="unit.phone" /><FormField label="WhatsApp" name="unit.whatsapp" /><FormField label="Precio base" name="unit.priceBase" type="number" required /></> : null}
@@ -367,6 +374,7 @@ export default function AdminPanel() {
           <FormField label="Información extendida para el detalle" name="extendedInformation"><textarea className={`${inputClass} min-h-28 py-3`} name="extendedInformation" maxLength={4000} defaultValue={selectedService.extendedInformation ?? ""} /></FormField>
           <FormField label="Cobertura" name="coverage"><textarea className={`${inputClass} min-h-20 py-3`} name="coverage" defaultValue={selectedService.coverage ?? ""} /></FormField>
           <PaymentFields service={selectedService} />
+          <label className="flex min-h-11 items-center gap-3 text-sm font-bold text-slate-700"><input type="checkbox" name="destacado" value="true" defaultChecked={selectedService.destacado} className="size-5" /> Servicio prioritario / promocionado (aparece aleatoriamente al inicio)</label>
           {!editRequiresUnits ? <ScheduleFields key={`schedule-${selectedService.id}`} initialSchedule={selectedService.schedule} /> : <input type="hidden" name="schedule" value="[]" />}
           <label className="flex min-h-11 items-center gap-3 text-sm font-bold text-slate-700"><input type="checkbox" name="visible" value="true" defaultChecked={selectedService.visible} className="size-5" /> Visible públicamente</label>
           <button className={primaryButton} disabled={pending}>{pending ? "Guardando..." : "Guardar servicio"}</button>
@@ -385,9 +393,31 @@ export default function AdminPanel() {
           {selectedService.requiresUnits && selectedService.units.length ? (
             <>
               <label className={`${labelClass} mt-4`}>Unidad<select className={inputClass} value={selectedUnit?.id ?? ""} onChange={(event) => { setSelectedUnitId(Number(event.target.value)); setGeneratedAccess(null); }}>{selectedService.units.map((unit, index) => <option key={unit.id} value={unit.id}>{unit.name || `Unidad ${index + 1}`}</option>)}</select></label>
-              {selectedUnit ? <UnitEditor key={selectedUnit.id} unit={selectedUnit} service={selectedService} pending={pending} generatedAccess={generatedAccess} onSave={async (event) => { event.preventDefault(); const values = formValues(event.currentTarget); try { await execute("update_unit", { serviceId: selectedService.id, unitId: selectedUnit.id, data: { ...values, active: values.active === "true" } }); setFeedback({ type: "success", message: "Unidad actualizada." }); } catch {} }} onStatus={async (statusAction) => { try { await execute("update_unit_status", { serviceId: selectedService.id, unitId: selectedUnit.id, statusAction }); setFeedback({ type: "success", message: "Estado actualizado." }); } catch {} }} onAccess={async () => { if (selectedUnit.hasAccess && !window.confirm("El enlace anterior dejará de funcionar. ¿Deseas rotar el acceso?")) return; try { await execute("rotate_access", { serviceId: selectedService.id, unitId: selectedUnit.id }); setFeedback({ type: "success", message: "Acceso privado generado." }); } catch {} }} /> : null}
+              {selectedUnit ? <UnitEditor key={selectedUnit.id} unit={selectedUnit} service={selectedService} pending={pending} generatedAccess={generatedAccess} onSave={async (event) => { event.preventDefault(); const values = formValues(event.currentTarget); try { await execute("update_unit", { serviceId: selectedService.id, unitId: selectedUnit.id, data: { ...values, active: values.active === "true" } }); setFeedback({ type: "success", message: "Unidad actualizada." }); } catch { } }} onStatus={async (statusAction) => { try { await execute("update_unit_status", { serviceId: selectedService.id, unitId: selectedUnit.id, statusAction }); setFeedback({ type: "success", message: "Estado actualizado." }); } catch { } }} onAccess={async () => { if (selectedUnit.hasAccess && !window.confirm("El enlace anterior dejará de funcionar. ¿Deseas rotar el acceso?")) return; try { await execute("rotate_access", { serviceId: selectedService.id, unitId: selectedUnit.id }); setFeedback({ type: "success", message: "Acceso privado generado." }); } catch { } }} /> : null}
             </>
           ) : <p className="mt-4 text-sm text-slate-500">{selectedService.requiresUnits ? "Este servicio todavía no tiene unidades." : "Esta categoría se administra como negocio, sin unidades."}</p>}
+        </section>
+
+        <section className={`${cardClass} mt-4 border-red-200 bg-red-50/50`}>
+          <h2 className="text-lg font-black text-red-800">Zona de peligro</h2>
+          <p className="mt-1 text-xs text-slate-600">Eliminar este servicio borrará permanentemente sus datos y unidades asociadas.</p>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={async () => {
+              if (!window.confirm(`¿Estás seguro de eliminar el servicio "${selectedService.name}"? Esta acción no se puede deshacer.`)) return;
+              try {
+                await execute("delete_service", { serviceId: selectedService.id });
+                setSelectedServiceId(null);
+                setFeedback({ type: "success", message: "Servicio eliminado correctamente." });
+              } catch (error) {
+                setFeedback({ type: "error", message: error.message });
+              }
+            }}
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-extrabold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+          >
+            <Trash2 size={17} /> Eliminar servicio
+          </button>
         </section>
       </AdminShell>
     );
